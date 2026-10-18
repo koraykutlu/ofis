@@ -169,7 +169,7 @@
     aktif = id; aSec.value = id;
     if (!konusma[id]) { const k = document.createElement("div"); k.className = "kutu"; konusma[id] = { oturum: "", kutu: k }; selam(id); }
     liste.replaceChildren(kutu(id)); asagi();
-    const a = AJANLAR[id]; el("sAd").textContent = a.ad; el("sRol").textContent = a.rol + " · gerçek"; portre(el("sPortre"), id);
+    const a = AJANLAR[id]; el("sAd").textContent = a.ad; giris.placeholder = `${window.OFIS_KISI ? window.OFIS_KISI.ek(a.ad, "a") : a.ad + "'a"} sor… (Enter gönder, Shift+Enter yeni satır)`; el("sRol").textContent = a.rol + " · gerçek"; portre(el("sPortre"), id);
     panel.hidden = false; OFIS_AI.sohbetBasla(id); durumBak(); setTimeout(() => giris.focus(), 30);
   }
   function kapat() { panel.hidden = true; if (sure !== aktif) OFIS_AI.sohbetBitti(aktif); OFIS_AI.odak(); }
