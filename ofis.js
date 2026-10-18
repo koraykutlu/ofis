@@ -1736,7 +1736,7 @@
       mama, NESNELER, sesKonum, parcacik, yanKaro, enYakinYurur, gorevBitir,
       efekt, tetik, ziyaretNoktasi, eveDon, get kayitSon() { return kayitSon; }, set kayitSon(v) { kayitSon = v; },
       // Düzenle modu
-      HR, KAT, OTURAKLAR, GIRIS, nesneler, dunya, katBul, katYukle, kaynak, spr: (k) => spr(kaynak(k)), yerlesimYenile, erisimDenetle, korunanMi,
+      oturt, kalk, HR, KAT, OTURAKLAR, GIRIS, nesneler, dunya, katBul, katYukle, kaynak, spr: (k) => spr(kaynak(k)), yerlesimYenile, erisimDenetle, korunanMi,
       mobilyaImza, duzenTemizle, ANAHTAR, get duzen() { return duzen; }, set duzen(d) { duzen = d; },
       get ton() { return PEMBE_TON; }, set ton(v) { PEMBE_TON = Math.max(0, Math.min(0.5, +v || 0)); }, TON_TABAN,
       get kameraYakin() { return kameraYakin; }, kameraAyarla: (yakin) => { if (kameraYakin !== yakin) kameraDegis(); },

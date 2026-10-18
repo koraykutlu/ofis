@@ -12,6 +12,7 @@ Oyunu sunar ve Ada'nın gerçek beyin sohbetini Claude Code aboneliğiyle (`clau
 - Asansörle ziyaret (ziyaret.py): ağa açılan TEK şey ayrı ziyaret dinleyicisidir (varsayılan kapalı; yalnız /z/* JSON, dosya sunmaz). Bu 127.0.0.1 sunucusu aynı kalır;
   yalnız anahtarlı /api/ziyaret/* uçları eklendi (ayar, eşleşme, ziyaret isteği, ev sahibi anlık görüntüsü). Eşleşme ve ayar VERI/eslesmeler.json, ziyaret.json.
 """
+import base64
 import hashlib
 import html
 import ipaddress
@@ -66,6 +67,7 @@ MODELLER = {"haiku": "Haiku 5.5", "sonnet": "Sonnet 5.5", "opus": "Opus 5.5", "f
 EFORLAR = ["low", "medium", "high", "xhigh", "max"]
 OTURUM_RE = re.compile(r"[0-9a-f-]{20,60}")
 ONERI_RE = re.compile(r"<oneri>(.*?)</oneri>", re.S)
+SECENEK_RE = re.compile(r"<secenek>(.*?)</secenek>", re.S)   # bilgisayar sohbetinde seçenek kartı (Ada'nın sorusu + en çok 6 seçenek)
 ZAMAN_ASIMI = 600
 NABIZ_SURE = 30 * 60          # sayfa nabzı bu kadar kesilirse sunucu kapanır (eskiden 180 sn; arka planda dondurulan pencere erken kapanmasın diye 30 dk)
 
@@ -335,17 +337,21 @@ def sistem_istemi(ajan="ada", tam=False):
     kisa = KISI["kullanici_adi"].split()[0]   # "Ad Soyad" -> "Ad": konuşma dilindeki hitap
     simdi = datetime.now()
     saat = f"Şu an: {GUNLER[simdi.weekday()]} {simdi:%d.%m.%Y %H:%M} (bilgisayarın saati). Saat ya da tarih lazımsa buna bak, tahmin etme."
+    SECENEK_TALIMAT = ("Kullanıcıya bir seçim sunmak, çok adımlı bir işte yön sormak ya da geri alınamaz/riskli bir işlem (dosya silme, git push, komutla sistem değiştirme) için onay istemek gerektiğinde "
+                       "düz metinle \"şunu mu bunu mu\" yazmak yerine cevabının EN SONUNA tek bir <secenek> bloğu koy: <secenek>{\"soru\": \"Kısa soru\", \"secenekler\": [{\"etiket\": \"Kısa ad\", \"aciklama\": \"Tek cümle açıklama\"}], \"coklu\": false}</secenek>. "
+                       "En çok 6 seçenek, her cevapta en çok bir blok; öneri bloğuyla aynı cevapta kullanma. Riskli işlemde seçenekler \"Evet, yap\" ve \"Vazgeç\" olsun. "
+                       "Kullanıcı kartı tıklayınca cevabı bir sonraki mesajda gelir; beklemeden bir şey yapma.\n")
     TAM_YAZMA = (f"Tam yetenek kipindesin: çalışma klasörün vault, Edit/Write/Bash/WebFetch/WebSearch açık; AGENTS.md ve vault kuralları geçerli. {kisa} bir şeyi kaydetmeni, not almanı ya da yapmanı isterse "
                  "doğrudan yap ve ne yaptığını (hangi dosya, hangi komut) kısaca söyle; onay kartı bloğu (<oneri>) KULLANMA. Geri alınamaz işlemlerde (silme, git push/reset, dışarıya gönderme, "
                  "kimliğe ya da ödemeye dokunan her şey) önce sor ve açık onay almadan yapma. Vault dışında yalnız kullanıcının istediği yere dokun.\n")
-    yazma = TAM_YAZMA if tam else f"""Yazma aracın yok. {kisa} bir şeyi kaydetmeni, not almanı, görev eklemeni isterse (ya da açıkça işine yarayacaksa ve sorarak), cevabının
+    yazma = (TAM_YAZMA if tam else f"""Yazma aracın yok. {kisa} bir şeyi kaydetmeni, not almanı, görev eklemeni isterse (ya da açıkça işine yarayacaksa ve sorarak), cevabının
 EN SONUNA tek bir öneri bloğu koy; oyun bunu onay kartına çevirir, {kisa} "Onayla" demeden hiçbir şey yazılmaz:
 <oneri>{{"tur": "not" | "gorev" | "ekle", "yol": "notes/....md | tasks/....md", "baslik": "...", "metin": "...", "proje": "..."}}</oneri>
 - not: yeni not (yol notes/ altında, var olmayan bir dosya; kısa-tireli-türkçe-ad.md). metin başlıksız gövde.
 - gorev: yeni görev (yol tasks/ altında, var olmayan dosya). metin: ne, neden, ilk adım.
 - ekle: var olan bir notun SONUNA eklenecek metin (yol notes/ altında var olan dosya; önce Read ile bak).
 Blok geçerli JSON olmalı (metindeki satır sonları \\n). "Kaydettim" deme; "onayına sundum" de. Tek cevapta en çok bir öneri.
-"""
+""") + SECENEK_TALIMAT
     return f"""Sen {ad}'sın ({rol}). {kimlik} {tr_ek(KISI["kullanici_adi"], "ın")} piksel ofis oyununda ("{KISI["ofis_adi"]}") onunla (oyunda {KISI["oyuncu_adi"]} olarak görünüyor)
 masanda konuşuyorsun; ofisin diğer çalışanları da onun ikinci beyninin bölümleridir. Konuşma oyun içi bir sohbet kutusunda görünür.
 Senin alanın (önce buradan bak): {odak}. Alanın dışında bir soru gelirse kısaca cevapla, gerekirse "bunu {KISI["asistan_adi"]} daha iyi bilir" de.
@@ -539,20 +545,46 @@ def oneri_uygula(o):
 
 # ---------------- claude akışı ----------------
 def gorunur(metin):
-    """Ekranda gösterilecek metin: tamamlanmış öneri blokları çıkarılır; yarım kalan blok ve sondaki '<oner' öneki gizlenir."""
-    t = ONERI_RE.sub("", metin)
-    i = t.find("<oneri")
+    """Ekranda gösterilecek metin: tamamlanmış <oneri> ve <secenek> blokları çıkarılır; yarım kalan blok ve sondaki '<oner' / '<secen' öneki gizlenir."""
+    t = SECENEK_RE.sub("", ONERI_RE.sub("", metin))
+    i = min([x for x in (t.find("<oneri"), t.find("<secenek")) if x >= 0], default=-1)
     if i >= 0:
         t = t[:i]
-    for n in range(min(6, len(t)), 0, -1):
-        if "<oneri"[:n] == t[-n:]:
+    for n in range(min(8, len(t)), 0, -1):
+        if t[-n:] in ("<oneri"[:n], "<secenek"[:n]):
             t = t[:-n]
             break
     return t.rstrip() if i >= 0 else t
 
 
+def secenek_dogrula(ham):
+    """Metindeki İLK <secenek> bloğunu çözer ve doğrular; geçersizse None döner (hata fırlatmaz)."""
+    eslesme = SECENEK_RE.search(ham or "")
+    if not eslesme:
+        return None
+    try:
+        o = json.loads(eslesme.group(1).strip(), strict=False)   # strict=False: metindeki ham satır sonu/kontrol karakteri JSON'u bozmasın (_metin temizler)
+    except (ValueError, TypeError):
+        return None
+    if not isinstance(o, dict):
+        return None
+    soru = _metin(o.get("soru"), "", 300)
+    secenekler = o.get("secenekler")
+    if not soru or not isinstance(secenekler, list) or not 2 <= len(secenekler) <= 6:
+        return None
+    liste = []
+    for s in secenekler:
+        if not isinstance(s, dict):
+            return None
+        etiket = _metin(s.get("etiket"), "", 60)
+        if not etiket:
+            return None
+        liste.append({"etiket": etiket, "aciklama": _metin(s.get("aciklama"), "", 160)})
+    return {"soru": soru, "secenekler": liste, "coklu": o.get("coklu") is True}
+
+
 def arac_ozeti(ad, girdi):
-    h = girdi.get("file_path") or girdi.get("pattern") or girdi.get("path") or ""
+    h = girdi.get("file_path") or girdi.get("pattern") or girdi.get("path") or girdi.get("command") or girdi.get("url") or girdi.get("query") or ""   # Bash/PowerShell komutu, web adresi/sorgusu (tam yetenek kipi)
     h = str(h).replace("\\", "/")
     v = str(VAULT).replace("\\", "/")
     if h.startswith(v):
@@ -577,14 +609,21 @@ def sor(istek, yaz, tablet=False):
     araclar = (["--allowedTools", "Read", "Grep", "Glob", "Edit", "Write", "Bash", "WebFetch", "WebSearch", "--disallowedTools", "NotebookEdit", "Task"] if tam_kip
                else ["--allowedTools", "Read", "Grep", "Glob", "--disallowedTools", "Bash", "Edit", "Write", "WebFetch", "WebSearch", "NotebookEdit", "Task"])
     arg = [exe, "-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages",
-           "--model", model, "--effort", efor, "--add-dir", str(VAULT), *araclar,
+           "--model", model, "--effort", efor, "--add-dir", str(VAULT), "--add-dir", str(bilg_resim_klasor()), *araclar,
            "--append-system-prompt", sistem_istemi(ajan, tam_kip)]
     with _kilit:
         if _surec and _surec.poll() is None:
             return yaz({"tur": "hata", "metin": "Ada şu an başka bir soruyla meşgul."})
+        if oturum and OTURUM_RE.fullmatch(oturum) and oturum not in _oturumlar:   # yeniden başlatma sonrası: kayıtlı bilgisayar sohbetinin oturumu
+            var, tam_o = bilg_oturum_bilinir(oturum)
+            if var:
+                _oturumlar.add(oturum)
+                if tam_o:
+                    _tam_oturumlar.add(oturum)
         if oturum and OTURUM_RE.fullmatch(oturum) and oturum in _oturumlar and (oturum in _tam_oturumlar) == tam_kip:
             arg += ["--resume", oturum]
         CALISMA.mkdir(parents=True, exist_ok=True)
+        bilg_resim_klasor().mkdir(parents=True, exist_ok=True)
         ortam = {k: v for k, v in os.environ.items() if k not in ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN")}   # abonelik kullanılsın
         _surec = p = subprocess.Popen(arg, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=str(VAULT if tam_kip else CALISMA),
                                       env=ortam, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
@@ -645,8 +684,12 @@ def sor(istek, yaz, tablet=False):
             else:
                 oneriler.append({"gecersiz": neden})
         threading.Thread(target=sohbet_kaydet, args=(ajan, soru, tam, MODELLER[model]), daemon=True).start()   # konuşulan ikinci beyinde kalsın
-        yaz({"tur": "bitti", "oturum": sid, "metin": gorunur(tam).strip(), "oneriler": oneriler,
-             "sure": round((sonuc.get("duration_ms") or 0) / 1000, 1)})
+        bitti = {"tur": "bitti", "oturum": sid, "metin": gorunur(tam).strip(), "oneriler": oneriler,
+                 "sure": round((sonuc.get("duration_ms") or 0) / 1000, 1)}
+        secenek = secenek_dogrula(tam)   # geçersiz ya da yoksa kart eklenmez
+        if secenek:
+            bitti["secenek"] = secenek
+        yaz(bitti)
     except (BrokenPipeError, ConnectionError):
         if p.poll() is None:
             p.kill()
@@ -660,6 +703,142 @@ def iptal():
             _surec.kill()
             return True
     return False
+
+
+# ---------------- bilgisayar penceresi (moduller/bilgisayar.js) ----------------
+# Oyundaki masa bilgisayarı: oyundan çıkmadan Ada'yla uzun, kalıcı sohbetler. Sohbetler VERI/bilgisayar/sohbetler/<id>.json (kalıcı; "sil" taşır, silmez),
+# eklenen resimler VERI/bilgisayar/resimler/<özet>.<uzantı>. Uçlar yalnız yerel pencerede (tablet kapısının izin listesinde YOK). Soruyu yine /api/sor cevaplar;
+# kayıtlı oturum kimliği yeniden başlatmadan sonra da --resume edilebilsin diye (bilg_oturum_bilinir) sunucu belleği dışında da tanınır.
+BILG_ID_RE = re.compile(r"[0-9a-f]{12}")
+BILG_TURLER = ("oyuncu", "ajan", "arac", "bilgi", "resim", "secenek")
+BILG_RESIM_EN_FAZLA = 6 * 1024 * 1024
+BILG_RESIM_SINIR = 8_500_000       # /api/bilgisayar/resim gövdesi (base64); diğer uçlar 200 KB
+BILG_KAYIT_SINIR = 5 * 1024 * 1024
+
+
+def bilg_sohbet_klasor():
+    return VERI / "bilgisayar" / "sohbetler"
+
+
+def bilg_resim_klasor():
+    return VERI / "bilgisayar" / "resimler"
+
+
+def bilg_oku(sid):
+    if not isinstance(sid, str) or not BILG_ID_RE.fullmatch(sid):
+        return None
+    try:
+        d = json.loads((bilg_sohbet_klasor() / f"{sid}.json").read_text(encoding="utf-8"))
+        return d if isinstance(d, dict) else None
+    except (OSError, ValueError):
+        return None
+
+
+def bilg_liste():
+    sonuc = []
+    try:
+        dosyalar = list(bilg_sohbet_klasor().glob("*.json"))
+    except OSError:
+        return sonuc
+    for p in dosyalar:
+        d = bilg_oku(p.stem)
+        if d:
+            sonuc.append({"id": p.stem, "baslik": _metin(d.get("baslik"), "Sohbet", 80), "guncel": d.get("guncel") if isinstance(d.get("guncel"), (int, float)) else 0,
+                          "sayi": len(d.get("mesajlar") or [])})
+    sonuc.sort(key=lambda x: x["guncel"], reverse=True)
+    return sonuc[:200]
+
+
+def bilg_kaydet(g):
+    """Doğrular ve yazar; (id, hata) döner."""
+    sid = g.get("id") if isinstance(g.get("id"), str) and BILG_ID_RE.fullmatch(g.get("id")) else secrets.token_hex(6)
+    mesajlar = []
+    for m in (g.get("mesajlar") if isinstance(g.get("mesajlar"), list) else [])[:600]:
+        if isinstance(m, dict) and m.get("k") in BILG_TURLER and isinstance(m.get("m"), str):
+            mesajlar.append({"k": m["k"], "m": m["m"][:100_000]})
+    oturum = g.get("oturum") if isinstance(g.get("oturum"), str) and OTURUM_RE.fullmatch(g.get("oturum")) else ""
+    kayit = {"id": sid, "baslik": _metin(g.get("baslik"), "Yeni sohbet", 80), "oturum": oturum, "tam": g.get("tam") is True,
+             "model": g.get("model") if g.get("model") in MODELLER else "haiku", "efor": g.get("efor") if g.get("efor") in EFORLAR else "medium",
+             "guncel": time.time(), "mesajlar": mesajlar}
+    ham = json.dumps(kayit, ensure_ascii=False)
+    if len(ham.encode("utf-8")) > BILG_KAYIT_SINIR:
+        return None, "Sohbet çok büyük: yeni bir sohbet başlat."
+    klasor = bilg_sohbet_klasor()
+    klasor.mkdir(parents=True, exist_ok=True)
+    gec = klasor / f"{sid}.json.tmp"
+    gec.write_text(ham, encoding="utf-8")
+    os.replace(gec, klasor / f"{sid}.json")
+    return sid, None
+
+
+def bilg_sil(sid):
+    """Silmez: sohbet 'silinen' klasörüne taşınır."""
+    if not isinstance(sid, str) or not BILG_ID_RE.fullmatch(sid):
+        return False
+    kaynak = bilg_sohbet_klasor() / f"{sid}.json"
+    if not kaynak.is_file():
+        return False
+    hedef = VERI / "bilgisayar" / "silinen"
+    hedef.mkdir(parents=True, exist_ok=True)
+    os.replace(kaynak, hedef / f"{sid}-{int(time.time())}.json")
+    return True
+
+
+def bilg_resim(g):
+    """{tur, veri: base64}: biçim imzası denetlenir (png/jpeg/webp/gif), en çok 6 MB; (yol, hata) döner."""
+    try:
+        ham = base64.b64decode(str(g.get("veri") or ""), validate=True)
+    except (ValueError, TypeError):
+        return None, "Resim çözülemedi."
+    if not ham or len(ham) > BILG_RESIM_EN_FAZLA:
+        return None, "Resim boş ya da 6 MB'dan büyük."
+    if ham.startswith(b"\x89PNG\r\n\x1a\n"):
+        uz = "png"
+    elif ham.startswith(b"\xff\xd8\xff"):
+        uz = "jpg"
+    elif ham[:4] == b"RIFF" and ham[8:12] == b"WEBP":
+        uz = "webp"
+    elif ham[:6] in (b"GIF87a", b"GIF89a"):
+        uz = "gif"
+    else:
+        return None, "Yalnız PNG, JPEG, WebP ve GIF resimleri."
+    klasor = bilg_resim_klasor()
+    klasor.mkdir(parents=True, exist_ok=True)
+    yol = klasor / f"{hashlib.sha256(ham).hexdigest()[:16]}.{uz}"
+    if not yol.exists():
+        yol.write_bytes(ham)
+    return str(yol), None
+
+
+def bilg_oturum_bilinir(oturum):
+    """Kayıtlı sohbetlerden birine ait Claude oturumu mu (yeniden başlatmadan sonra --resume için); (var, tam kipte açılmış mı)."""
+    try:
+        for p in bilg_sohbet_klasor().glob("*.json"):
+            d = bilg_oku(p.stem)
+            if d and d.get("oturum") == oturum:
+                return True, d.get("tam") is True
+    except OSError:
+        pass
+    return False, False
+
+
+def bilgisayar_istek(yol, sorgu, g, yontem):
+    """/api/bilgisayar/* : (kod, veri)."""
+    ad = yol[len("/api/bilgisayar/"):]
+    if yontem == "GET" and ad == "liste":
+        return 200, {"liste": bilg_liste()}
+    if yontem == "GET" and ad == "sohbet":
+        d = bilg_oku((sorgu.get("id") or [""])[0])
+        return (200, d) if d else (404, {"hata": "Sohbet yok."})
+    if yontem == "POST" and ad == "kaydet":
+        sid, hata = bilg_kaydet(g)
+        return (200, {"id": sid}) if sid else (413, {"hata": hata})
+    if yontem == "POST" and ad == "sil":
+        return (200, {"ok": True}) if bilg_sil(g.get("id")) else (404, {"hata": "Sohbet yok."})
+    if yontem == "POST" and ad == "resim":
+        yol_, hata = bilg_resim(g)
+        return (200, {"yol": yol_}) if yol_ else (400, {"hata": hata})
+    return 404, {"hata": "yok"}
 
 
 # ---------------- Düzenle modu ----------------
@@ -800,6 +979,9 @@ class Isleyici(BaseHTTPRequestHandler):
             if yol.startswith("/api/ziyaret/") and ZIYARET:
                 kod, v = ZIYARET.api(yol[len("/api/ziyaret/"):], {}, "GET")   # GET yalnız okuma (durum); yan etkili uçlar POST ister
                 return self._json(kod, v)
+            if yol.startswith("/api/bilgisayar/"):
+                kod, v = bilgisayar_istek(yol, urllib.parse.parse_qs(self.path.split("?", 1)[1]) if "?" in self.path else {}, {}, "GET")
+                return self._json(kod, v)
             if yol == "/api/duzen":
                 return self._json(200, duzen_oku())
             if yol == "/api/gorunum":
@@ -855,7 +1037,7 @@ class Isleyici(BaseHTTPRequestHandler):
             n = int(self.headers.get("Content-Length") or 0)
         except ValueError:
             n = -1
-        if n < 0 or n > 200_000:
+        if n < 0 or n > (BILG_RESIM_SINIR if self.path.split("?", 1)[0] == "/api/bilgisayar/resim" else 200_000):
             return self._json(413, {"hata": "boyut"})
         try:
             g = json.loads(self.rfile.read(n) or b"{}")
@@ -880,6 +1062,9 @@ class Isleyici(BaseHTTPRequestHandler):
                 except OSError:
                     pass
             return
+        if yol.startswith("/api/bilgisayar/"):
+            kod, v = bilgisayar_istek(yol, {}, g if isinstance(g, dict) else {}, "POST")
+            return self._json(kod, v)
         if yol == "/api/duzen":
             d = duzen_dogrula(g)
             if not d:
