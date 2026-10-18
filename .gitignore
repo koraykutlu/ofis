@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+dist/
+# kullanici durum dosyalari (VERI klasoru normalde %LOCALAPPDATA%\OfisDemo; yanlislikla depoya girmesin)
+kisi.json
+duzen.json
+gorunum.json
+eslesmeler.json
+ziyaret.json
+tablet.json
+panel*.json
+konusma.json
+pano.json
+sohbet-kayit.json
+gunluk.txt

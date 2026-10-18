@@ -1,0 +1,13 @@
+Bu klasör boş gelir; Kur.bat dolduracak.
+
+Ofis, LimeZu'nun piksel sanat paketlerini kullanır. Lisans gereği bu paketler Ofis ile birlikte dağıtılmaz:
+her kullanıcı kendi kopyasını indirir. Kur.bat bu zip dosyalarını bulup buraya açar ve görselleri üretir.
+
+Gerekli paketler (itch.io: limezu.itch.io):
+  - Modern Interiors            (ücretli)
+  - Modern Office               (ücretli)
+  - Modern User Interface       (ücretli)
+  - Modern Interiors Free       (ücretsiz)
+
+Zip dosyalarını açmadan bir klasöre koy (örneğin İndirilenler); Kur.bat klasörü sorar.
+Burada oluşan dosyalar (atlas.png, katalog, gardirop, ui, oyuncu.png, ofis.png, ofis.ico, limezu-*) başkasına verilmez.

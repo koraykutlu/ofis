@@ -1,0 +1,2559 @@
+{
+ "type": "map",
+ "version": "1.10",
+ "tiledversion": "1.11.0",
+ "orientation": "orthogonal",
+ "renderorder": "right-down",
+ "width": 48,
+ "height": 32,
+ "tilewidth": 16,
+ "tileheight": 16,
+ "infinite": false,
+ "nextlayerid": 5,
+ "nextobjectid": 152,
+ "properties": [
+  {
+   "name": "not",
+   "type": "string",
+   "value": "Ofis haritası. Kaydedince: py -3 araclar/harita_yap.py (harita.js üretir)."
+  }
+ ],
+ "tilesets": [],
+ "layers": [
+  {
+   "id": 1,
+   "name": "odalar",
+   "type": "objectgroup",
+   "draworder": "index",
+   "objects": [
+    {
+     "id": 130,
+     "name": "GÜNDEM MASASI",
+     "type": "oda",
+     "x": 0,
+     "y": 0,
+     "width": 192,
+     "height": 176,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "id",
+       "type": "string",
+       "value": "gundem"
+      },
+      {
+       "name": "duvar",
+       "type": "int",
+       "value": 7
+      },
+      {
+       "name": "zemin",
+       "type": "string",
+       "value": "13,7"
+      }
+     ]
+    },
+    {
+     "id": 131,
+     "name": "YÖNETİM",
+     "type": "oda",
+     "x": 192,
+     "y": 0,
+     "width": 224,
+     "height": 176,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "id",
+       "type": "string",
+       "value": "yonetim"
+      },
+      {
+       "name": "duvar",
+       "type": "int",
+       "value": 11
+      },
+      {
+       "name": "zemin",
+       "type": "string",
+       "value": "10,11"
+      }
+     ]
+    },
+    {
+     "id": 132,
+     "name": "BEYİN ARŞİVİ",
+     "type": "oda",
+     "x": 416,
+     "y": 0,
+     "width": 160,
+     "height": 176,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "id",
+       "type": "string",
+       "value": "beyin"
+      },
+      {
+       "name": "duvar",
+       "type": "int",
+       "value": 5
+      },
+      {
+       "name": "zemin",
+       "type": "string",
+       "value": "13,5"
+      }
+     ]
+    },
+    {
+     "id": 133,
+     "name": "RADAR ODASI",
+     "type": "oda",
+     "x": 576,
+     "y": 0,
+     "width": 192,
+     "height": 176,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "id",
+       "type": "string",
+       "value": "radar"
+      },
+      {
+       "name": "duvar",
+       "type": "int",
+       "value": 7
+      },
+      {
+       "name": "zemin",
+       "type": "string",
+       "value": "10,9"
+      }
+     ]
+    },
+    {
+     "id": 134,
+     "name": "HABER MERKEZİ",
+     "type": "oda",
+     "x": 0,
+     "y": 176,
+     "width": 768,
+     "height": 176,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "id",
+       "type": "string",
+       "value": "merkez"
+      },
+      {
+       "name": "duvar",
+       "type": "int",
+       "value": 11
+      },
+      {
+       "name": "zemin",
+       "type": "string",
+       "value": "10,5"
+      }
+     ]
+    },
+    {
+     "id": 135,
+     "name": "MUTFAK",
+     "type": "oda",
+     "x": 0,
+     "y": 352,
+     "width": 176,
+     "height": 160,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "id",
+       "type": "string",
+       "value": "mutfak"
+      },
+      {
+       "name": "duvar",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "zemin",
+       "type": "string",
+       "value": "11,7"
+      },
+      {
+       "name": "rb",
+       "type": "string",
+       "value": "f"
+      }
+     ]
+    },
+    {
+     "id": 136,
+     "name": "TOPLANTI",
+     "type": "oda",
+     "x": 176,
+     "y": 352,
+     "width": 192,
+     "height": 160,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "id",
+       "type": "string",
+       "value": "toplanti"
+      },
+      {
+       "name": "duvar",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "zemin",
+       "type": "string",
+       "value": "13,11"
+      }
+     ]
+    },
+    {
+     "id": 137,
+     "name": "STÜDYO",
+     "type": "oda",
+     "x": 368,
+     "y": 352,
+     "width": 208,
+     "height": 160,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "id",
+       "type": "string",
+       "value": "studyo"
+      },
+      {
+       "name": "duvar",
+       "type": "int",
+       "value": 7
+      },
+      {
+       "name": "zemin",
+       "type": "string",
+       "value": "10,7"
+      }
+     ]
+    },
+    {
+     "id": 138,
+     "name": "YAYIN ODASI",
+     "type": "oda",
+     "x": 576,
+     "y": 352,
+     "width": 192,
+     "height": 160,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "id",
+       "type": "string",
+       "value": "yayin"
+      },
+      {
+       "name": "duvar",
+       "type": "int",
+       "value": 11
+      },
+      {
+       "name": "zemin",
+       "type": "string",
+       "value": "10,9"
+      }
+     ]
+    }
+   ],
+   "opacity": 1,
+   "visible": true,
+   "x": 0,
+   "y": 0,
+   "color": "#5a8dee"
+  },
+  {
+   "id": 2,
+   "name": "kapilar",
+   "type": "objectgroup",
+   "draworder": "index",
+   "objects": [
+    {
+     "id": 139,
+     "name": "kapı",
+     "type": "kapi",
+     "x": 80,
+     "y": 168,
+     "width": 32,
+     "height": 16,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 140,
+     "name": "kapı",
+     "type": "kapi",
+     "x": 288,
+     "y": 168,
+     "width": 32,
+     "height": 16,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 141,
+     "name": "kapı",
+     "type": "kapi",
+     "x": 480,
+     "y": 168,
+     "width": 32,
+     "height": 16,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 142,
+     "name": "kapı",
+     "type": "kapi",
+     "x": 656,
+     "y": 168,
+     "width": 32,
+     "height": 16,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 143,
+     "name": "kapı",
+     "type": "kapi",
+     "x": 80,
+     "y": 344,
+     "width": 32,
+     "height": 16,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 144,
+     "name": "kapı",
+     "type": "kapi",
+     "x": 192,
+     "y": 344,
+     "width": 32,
+     "height": 16,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 145,
+     "name": "kapı",
+     "type": "kapi",
+     "x": 384,
+     "y": 344,
+     "width": 32,
+     "height": 16,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 146,
+     "name": "kapı",
+     "type": "kapi",
+     "x": 656,
+     "y": 344,
+     "width": 32,
+     "height": 16,
+     "rotation": 0,
+     "visible": true
+    }
+   ],
+   "opacity": 1,
+   "visible": true,
+   "x": 0,
+   "y": 0,
+   "color": "#ee8d5a"
+  },
+  {
+   "id": 3,
+   "name": "mobilya",
+   "type": "objectgroup",
+   "draworder": "index",
+   "objects": [
+    {
+     "id": 1,
+     "name": "tvGundem",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 46,
+     "y": 2,
+     "width": 84,
+     "height": 28,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"duvar\": true}"
+      },
+      {
+       "name": "liste",
+       "type": "string",
+       "value": "ekranlar:gundem"
+      }
+     ]
+    },
+    {
+     "id": 2,
+     "name": "grafikTahta",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 142,
+     "y": 6,
+     "width": 30,
+     "height": 23,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"duvar\": true}"
+      }
+     ]
+    },
+    {
+     "id": 3,
+     "name": "tablo1",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 14,
+     "y": 8,
+     "width": 14,
+     "height": 17,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"duvar\": true}"
+      }
+     ]
+    },
+    {
+     "id": 4,
+     "name": "calismaMasasi",
+     "type": "masa",
+     "visible": true,
+     "rotation": 0,
+     "x": 48,
+     "y": 80,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"genis\": true, \"sahip\": \"muhabir1\", \"laptop\": true}"
+      }
+     ]
+    },
+    {
+     "id": 5,
+     "name": "calismaMasasi",
+     "type": "masa",
+     "visible": true,
+     "rotation": 0,
+     "x": 128,
+     "y": 80,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"genis\": true, \"tur\": \"Sari\", \"sahip\": \"muhabir2\", \"bitki\": true}"
+      }
+     ]
+    },
+    {
+     "id": 6,
+     "name": "yazici2",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 152,
+     "y": 156,
+     "width": 15,
+     "height": 16
+    },
+    {
+     "id": 7,
+     "name": "bitki1",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 4,
+     "y": 144,
+     "width": 16,
+     "height": 28
+    },
+    {
+     "id": 8,
+     "name": "dosyaDolabi",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 174,
+     "y": 40,
+     "width": 13,
+     "height": 22
+    },
+    {
+     "id": 9,
+     "name": "cop",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 124,
+     "y": 151,
+     "width": 13,
+     "height": 21
+    },
+    {
+     "id": 10,
+     "name": "kagitYigin",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 104,
+     "y": 151,
+     "width": 16,
+     "height": 21
+    },
+    {
+     "id": 11,
+     "name": "kitaplik",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 196,
+     "y": 12,
+     "width": 96,
+     "height": 34,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"golge\": true}"
+      }
+     ]
+    },
+    {
+     "id": 12,
+     "name": "pencereGenis",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 374,
+     "y": 4,
+     "width": 38,
+     "height": 25,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"duvar\": true}"
+      }
+     ]
+    },
+    {
+     "id": 13,
+     "name": "hk.tv",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 300,
+     "y": 0,
+     "width": 48,
+     "height": 32,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"engel\": false, \"sira\": 1, \"kutu\": [0, 0, 48, 32], \"w\": 48, \"h\": 32, \"anim\": {\"n\": 24, \"fps\": 6}}"
+      }
+     ]
+    },
+    {
+     "id": 14,
+     "name": "hk.guguk",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 354,
+     "y": 0,
+     "width": 16,
+     "height": 32,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"engel\": false, \"sira\": 1, \"kutu\": [0, 0, 16, 32], \"w\": 16, \"h\": 32, \"anim\": {\"n\": 10}}"
+      },
+      {
+       "name": "davranis",
+       "type": "string",
+       "value": "guguk"
+      }
+     ]
+    },
+    {
+     "id": 15,
+     "name": "koltukTuruncuOn",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 288,
+     "y": 55,
+     "width": 16,
+     "height": 23,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"engel\": false}"
+      }
+     ]
+    },
+    {
+     "id": 16,
+     "name": "masaKur:Turuncu,3",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 260,
+     "y": 74,
+     "width": 73,
+     "height": 21
+    },
+    {
+     "id": 17,
+     "name": "C.monitorArka(15,15)",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 289,
+     "y": 67,
+     "width": 15,
+     "height": 15,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"engel\": false}"
+      },
+      {
+       "name": "monitor",
+       "type": "string",
+       "value": "{\"x\": 292, \"y\": 69, \"w\": 9, \"h\": 6, \"sahip\": \"oyuncu\"}"
+      },
+      {
+       "name": "ustune",
+       "type": "object",
+       "value": 16
+      }
+     ]
+    },
+    {
+     "id": 18,
+     "name": "lamba",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 262,
+     "y": 64,
+     "width": 15,
+     "height": 17,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"engel\": false}"
+      },
+      {
+       "name": "ustune",
+       "type": "object",
+       "value": 16
+      }
+     ]
+    },
+    {
+     "id": 19,
+     "name": "telefon",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 312,
+     "y": 73,
+     "width": 13,
+     "height": 11,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"engel\": false}"
+      },
+      {
+       "name": "ustune",
+       "type": "object",
+       "value": 16
+      }
+     ]
+    },
+    {
+     "id": 20,
+     "name": "evrak",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 278,
+     "y": 72,
+     "width": 14,
+     "height": 16,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"engel\": false}"
+      },
+      {
+       "name": "ustune",
+       "type": "object",
+       "value": 16
+      }
+     ]
+    },
+    {
+     "id": 21,
+     "name": "klavye",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 288,
+     "y": 83,
+     "width": 16,
+     "height": 5,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"engel\": false}"
+      },
+      {
+       "name": "ustune",
+       "type": "object",
+       "value": 16
+      }
+     ]
+    },
+    {
+     "id": 22,
+     "name": "koltukTuruncuArka",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 272,
+     "y": 103,
+     "width": 16,
+     "height": 23
+    },
+    {
+     "id": 23,
+     "name": "koltukTuruncuArka",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 304,
+     "y": 103,
+     "width": 16,
+     "height": 23
+    },
+    {
+     "id": 24,
+     "name": "bitki1",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 198,
+     "y": 144,
+     "width": 16,
+     "height": 28
+    },
+    {
+     "id": 25,
+     "name": "bitki3",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 394,
+     "y": 146,
+     "width": 12,
+     "height": 26
+    },
+    {
+     "id": 26,
+     "name": "kure2",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 384,
+     "y": 50,
+     "width": 13,
+     "height": 21,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"golge\": true}"
+      }
+     ]
+    },
+    {
+     "id": 27,
+     "name": "lambaUzun",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 246,
+     "y": 44,
+     "width": 13,
+     "height": 33,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"golge\": true}"
+      }
+     ]
+    },
+    {
+     "id": 28,
+     "name": "kanepe",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 222,
+     "y": 148,
+     "width": 31,
+     "height": 24
+    },
+    {
+     "id": 29,
+     "name": "berjer",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 258,
+     "y": 154,
+     "width": 16,
+     "height": 18
+    },
+    {
+     "id": 30,
+     "name": "evrakCanta",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 340,
+     "y": 156,
+     "width": 15,
+     "height": 16,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"engel\": false}"
+      }
+     ]
+    },
+    {
+     "id": 31,
+     "name": "kitaplik",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 420,
+     "y": 12,
+     "width": 96,
+     "height": 34,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"golge\": true}"
+      }
+     ]
+    },
+    {
+     "id": 32,
+     "name": "C.rafKitap(44)",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 526,
+     "y": 6,
+     "width": 44,
+     "height": 40,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"golge\": true}"
+      }
+     ]
+    },
+    {
+     "id": 33,
+     "name": "calismaMasasi",
+     "type": "masa",
+     "visible": true,
+     "rotation": 0,
+     "x": 464,
+     "y": 96,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"genis\": true, \"tur\": \"Sari\", \"sahip\": \"ada\", \"bitki\": true}"
+      }
+     ]
+    },
+    {
+     "id": 34,
+     "name": "calismaMasasi",
+     "type": "masa",
+     "visible": true,
+     "rotation": 0,
+     "x": 528,
+     "y": 128,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"sahip\": \"postaci\", \"laptop\": true}"
+      }
+     ]
+    },
+    {
+     "id": 35,
+     "name": "evrak",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 514,
+     "y": 134,
+     "width": 14,
+     "height": 16,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"engel\": false, \"sira\": 188}"
+      }
+     ]
+    },
+    {
+     "id": 36,
+     "name": "haliYesil",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 434,
+     "y": 140,
+     "width": 26,
+     "height": 28,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"zemin\": true}"
+      }
+     ]
+    },
+    {
+     "id": 37,
+     "name": "kure",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 424,
+     "y": 136,
+     "width": 13,
+     "height": 21,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"golge\": true}"
+      }
+     ]
+    },
+    {
+     "id": 38,
+     "name": "bitki2",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 556,
+     "y": 154,
+     "width": 16,
+     "height": 18
+    },
+    {
+     "id": 39,
+     "name": "hk.sunucu",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 584,
+     "y": 6,
+     "width": 48,
+     "height": 48,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"kutu\": [0, 0, 48, 48], \"w\": 48, \"h\": 48}"
+      },
+      {
+       "name": "liste",
+       "type": "string",
+       "value": "sunucular"
+      }
+     ]
+    },
+    {
+     "id": 40,
+     "name": "hk.kontrol",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 662,
+     "y": 4,
+     "width": 64,
+     "height": 48,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"kutu\": [0, 0, 64, 48], \"w\": 64, \"h\": 48, \"anim\": {\"n\": 11, \"fps\": 4}}"
+      },
+      {
+       "name": "liste",
+       "type": "string",
+       "value": "ekranlar:kontrol"
+      }
+     ]
+    },
+    {
+     "id": 41,
+     "name": "calismaMasasi",
+     "type": "masa",
+     "visible": true,
+     "rotation": 0,
+     "x": 656,
+     "y": 80,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"genis\": true, \"sahip\": \"tarayici\", \"ikili\": true}"
+      }
+     ]
+    },
+    {
+     "id": 42,
+     "name": "calismaMasasi",
+     "type": "masa",
+     "visible": true,
+     "rotation": 0,
+     "x": 720,
+     "y": 128,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"sahip\": \"analist\", \"telefon\": true}"
+      }
+     ]
+    },
+    {
+     "id": 43,
+     "name": "bitki3",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 746,
+     "y": 36,
+     "width": 12,
+     "height": 26
+    },
+    {
+     "id": 44,
+     "name": "cop",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 612,
+     "y": 151,
+     "width": 13,
+     "height": 21
+    },
+    {
+     "id": 45,
+     "name": "dosyaDolabi2",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 586,
+     "y": 128,
+     "width": 13,
+     "height": 22,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"golge\": true}"
+      }
+     ]
+    },
+    {
+     "id": 46,
+     "name": "para",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 690,
+     "y": 152,
+     "width": 16,
+     "height": 20,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"engel\": false}"
+      }
+     ]
+    },
+    {
+     "id": 47,
+     "name": "pencereUzun",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 12,
+     "y": 180,
+     "width": 64,
+     "height": 25,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"duvar\": true}"
+      }
+     ]
+    },
+    {
+     "id": 48,
+     "name": "posterRenk",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 130,
+     "y": 184,
+     "width": 24,
+     "height": 20,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"duvar\": true}"
+      }
+     ]
+    },
+    {
+     "id": 49,
+     "name": "tabloGunes",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 182,
+     "y": 190,
+     "width": 28,
+     "height": 13,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"duvar\": true}"
+      }
+     ]
+    },
+    {
+     "id": 50,
+     "name": "C.klima()",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 222,
+     "y": 182,
+     "width": 30,
+     "height": 10,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"duvar\": true}"
+      }
+     ]
+    },
+    {
+     "id": 51,
+     "name": "pencereUzun",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 336,
+     "y": 180,
+     "width": 64,
+     "height": 25,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"duvar\": true}"
+      }
+     ]
+    },
+    {
+     "id": 52,
+     "name": "beyazTahta",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 420,
+     "y": 182,
+     "width": 30,
+     "height": 23,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"duvar\": true}"
+      }
+     ]
+    },
+    {
+     "id": 53,
+     "name": "tablo2",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 534,
+     "y": 186,
+     "width": 14,
+     "height": 17,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"duvar\": true}"
+      }
+     ]
+    },
+    {
+     "id": 54,
+     "name": "pencereGenis",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 574,
+     "y": 180,
+     "width": 38,
+     "height": 25,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"duvar\": true}"
+      }
+     ]
+    },
+    {
+     "id": 55,
+     "name": "C.saat()",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 624,
+     "y": 188,
+     "width": 12,
+     "height": 12,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"duvar\": true}"
+      }
+     ]
+    },
+    {
+     "id": 56,
+     "name": "akvaryum",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 708,
+     "y": 188,
+     "width": 21,
+     "height": 14,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"duvar\": true}"
+      }
+     ]
+    },
+    {
+     "id": 57,
+     "name": "C.asansor()",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 730,
+     "y": 176,
+     "width": 28,
+     "height": 32,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"duvar\": true}"
+      }
+     ]
+    },
+    {
+     "id": 58,
+     "name": "C.paspas()",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 730,
+     "y": 210,
+     "width": 28,
+     "height": 8,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"zemin\": true}"
+      }
+     ]
+    },
+    {
+     "id": 59,
+     "name": "calismaMasasi",
+     "type": "masa",
+     "visible": true,
+     "rotation": 0,
+     "x": 64,
+     "y": 240,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"sahip\": \"editor\", \"ikili\": true}"
+      }
+     ]
+    },
+    {
+     "id": 60,
+     "name": "calismaMasasi",
+     "type": "masa",
+     "visible": true,
+     "rotation": 0,
+     "x": 112,
+     "y": 240,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"telefon\": true}"
+      }
+     ]
+    },
+    {
+     "id": 61,
+     "name": "calismaMasasi",
+     "type": "masa",
+     "visible": true,
+     "rotation": 0,
+     "x": 160,
+     "y": 240,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"sahip\": \"denetci\"}"
+      }
+     ]
+    },
+    {
+     "id": 62,
+     "name": "calismaMasasi",
+     "type": "masa",
+     "visible": true,
+     "rotation": 0,
+     "x": 320,
+     "y": 240,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"tur\": \"Sari\", \"bitki\": true}"
+      }
+     ]
+    },
+    {
+     "id": 63,
+     "name": "calismaMasasi",
+     "type": "masa",
+     "visible": true,
+     "rotation": 0,
+     "x": 368,
+     "y": 240,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"tur\": \"Sari\", \"sahip\": \"sosyal\", \"laptop\": true}"
+      }
+     ]
+    },
+    {
+     "id": 64,
+     "name": "calismaMasasi",
+     "type": "masa",
+     "visible": true,
+     "rotation": 0,
+     "x": 416,
+     "y": 240,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"tur\": \"Sari\"}"
+      }
+     ]
+    },
+    {
+     "id": 65,
+     "name": "calismaMasasi",
+     "type": "masa",
+     "visible": true,
+     "rotation": 0,
+     "x": 64,
+     "y": 304,
+     "width": 16,
+     "height": 16
+    },
+    {
+     "id": 66,
+     "name": "calismaMasasi",
+     "type": "masa",
+     "visible": true,
+     "rotation": 0,
+     "x": 112,
+     "y": 304,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"laptop\": true}"
+      }
+     ]
+    },
+    {
+     "id": 67,
+     "name": "calismaMasasi",
+     "type": "masa",
+     "visible": true,
+     "rotation": 0,
+     "x": 160,
+     "y": 304,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"telefon\": true}"
+      }
+     ]
+    },
+    {
+     "id": 68,
+     "name": "calismaMasasi",
+     "type": "masa",
+     "visible": true,
+     "rotation": 0,
+     "x": 320,
+     "y": 304,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"tur\": \"Sari\"}"
+      }
+     ]
+    },
+    {
+     "id": 69,
+     "name": "calismaMasasi",
+     "type": "masa",
+     "visible": true,
+     "rotation": 0,
+     "x": 368,
+     "y": 304,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"tur\": \"Sari\", \"bitki\": true}"
+      }
+     ]
+    },
+    {
+     "id": 70,
+     "name": "calismaMasasi",
+     "type": "masa",
+     "visible": true,
+     "rotation": 0,
+     "x": 416,
+     "y": 304,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"tur\": \"Sari\", \"telefon\": true}"
+      }
+     ]
+    },
+    {
+     "id": 71,
+     "name": "haliBej",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 650,
+     "y": 280,
+     "width": 43,
+     "height": 28,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"zemin\": true}"
+      }
+     ]
+    },
+    {
+     "id": 72,
+     "name": "sebil",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 562,
+     "y": 214,
+     "width": 14,
+     "height": 30
+    },
+    {
+     "id": 73,
+     "name": "otomat",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 588,
+     "y": 212,
+     "width": 23,
+     "height": 34
+    },
+    {
+     "id": 74,
+     "name": "fotokopi",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 520,
+     "y": 296,
+     "width": 25,
+     "height": 20
+    },
+    {
+     "id": 75,
+     "name": "kanepe",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 646,
+     "y": 244,
+     "width": 31,
+     "height": 24
+    },
+    {
+     "id": 76,
+     "name": "kanepe2",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 680,
+     "y": 244,
+     "width": 31,
+     "height": 24
+    },
+    {
+     "id": 77,
+     "name": "berjer",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 648,
+     "y": 316,
+     "width": 16,
+     "height": 18
+    },
+    {
+     "id": 78,
+     "name": "berjer2",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 690,
+     "y": 316,
+     "width": 16,
+     "height": 18
+    },
+    {
+     "id": 79,
+     "name": "bitki1",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 748,
+     "y": 218,
+     "width": 16,
+     "height": 28
+    },
+    {
+     "id": 80,
+     "name": "bitki3",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 750,
+     "y": 314,
+     "width": 12,
+     "height": 26
+    },
+    {
+     "id": 81,
+     "name": "bitki1",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 2,
+     "y": 218,
+     "width": 16,
+     "height": 28
+    },
+    {
+     "id": 82,
+     "name": "bitki2",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 466,
+     "y": 322,
+     "width": 16,
+     "height": 18
+    },
+    {
+     "id": 83,
+     "name": "cop2",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 548,
+     "y": 319,
+     "width": 13,
+     "height": 21
+    },
+    {
+     "id": 84,
+     "name": "dosyaDolabi",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 490,
+     "y": 218,
+     "width": 13,
+     "height": 22
+    },
+    {
+     "id": 85,
+     "name": "hk.akvaryum",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 716,
+     "y": 218,
+     "width": 32,
+     "height": 32,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"golge\": true, \"kutu\": [0, 0, 32, 32], \"w\": 32, \"h\": 32, \"anim\": {\"n\": 8, \"fps\": 5}}"
+      },
+      {
+       "name": "davranis",
+       "type": "string",
+       "value": "akvaryum"
+      }
+     ]
+    },
+    {
+     "id": 86,
+     "name": "buzdolabi",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 8,
+     "y": 362,
+     "width": 16,
+     "height": 36
+    },
+    {
+     "id": 87,
+     "name": "buzdolabi",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 26,
+     "y": 362,
+     "width": 16,
+     "height": 36
+    },
+    {
+     "id": 88,
+     "name": "C.tezgah(58)",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 114,
+     "y": 372,
+     "width": 58,
+     "height": 28,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"golge\": true}"
+      }
+     ]
+    },
+    {
+     "id": 89,
+     "name": "kahveMakinesi",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 120,
+     "y": 357,
+     "width": 14,
+     "height": 19,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"engel\": false}"
+      },
+      {
+       "name": "ustune",
+       "type": "object",
+       "value": 88
+      }
+     ]
+    },
+    {
+     "id": 90,
+     "name": "mikrodalga",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 155,
+     "y": 362,
+     "width": 16,
+     "height": 14,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"engel\": false}"
+      },
+      {
+       "name": "ustune",
+       "type": "object",
+       "value": 88
+      }
+     ]
+    },
+    {
+     "id": 91,
+     "name": "hk.kahve",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 137,
+     "y": 346,
+     "width": 16,
+     "height": 32,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"engel\": false, \"kutu\": [0, 0, 16, 32], \"w\": 16, \"h\": 32, \"anim\": {\"n\": 6, \"fps\": 5}}"
+      },
+      {
+       "name": "ustune",
+       "type": "object",
+       "value": 88
+      },
+      {
+       "name": "siraArti",
+       "type": "int",
+       "value": 2
+      }
+     ]
+    },
+    {
+     "id": 92,
+     "name": "mutfakSandalye",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 28,
+     "y": 447,
+     "width": 13,
+     "height": 21
+    },
+    {
+     "id": 93,
+     "name": "mutfakMasa",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 42,
+     "y": 444,
+     "width": 30,
+     "height": 26
+    },
+    {
+     "id": 94,
+     "name": "mutfakSandalye2",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 74,
+     "y": 447,
+     "width": 13,
+     "height": 21
+    },
+    {
+     "id": 95,
+     "name": "bitki2",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 150,
+     "y": 486,
+     "width": 16,
+     "height": 18
+    },
+    {
+     "id": 96,
+     "name": "cop",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 100,
+     "y": 399,
+     "width": 13,
+     "height": 21
+    },
+    {
+     "id": 97,
+     "name": "tabloKedi",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 60,
+     "y": 362,
+     "width": 21,
+     "height": 14,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"duvar\": true}"
+      }
+     ]
+    },
+    {
+     "id": 98,
+     "name": "perdeGenis",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 252,
+     "y": 355,
+     "width": 96,
+     "height": 41,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"duvar\": true}"
+      },
+      {
+       "name": "liste",
+       "type": "string",
+       "value": "ekranlar:brifing"
+      }
+     ]
+    },
+    {
+     "id": 99,
+     "name": "bayrakKirmizi",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 232,
+     "y": 362,
+     "width": 14,
+     "height": 13,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"duvar\": true}"
+      }
+     ]
+    },
+    {
+     "id": 100,
+     "name": "bayrakMavi",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 352,
+     "y": 362,
+     "width": 14,
+     "height": 13,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"duvar\": true}"
+      }
+     ]
+    },
+    {
+     "id": 101,
+     "name": "koltukOn",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 230,
+     "y": 411,
+     "width": 16,
+     "height": 23,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"engel\": false}"
+      }
+     ]
+    },
+    {
+     "id": 102,
+     "name": "koltukOn",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 252,
+     "y": 411,
+     "width": 16,
+     "height": 23,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"engel\": false}"
+      }
+     ]
+    },
+    {
+     "id": 103,
+     "name": "koltukOn",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 274,
+     "y": 411,
+     "width": 16,
+     "height": 23,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"engel\": false}"
+      }
+     ]
+    },
+    {
+     "id": 104,
+     "name": "koltukOn",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 296,
+     "y": 411,
+     "width": 16,
+     "height": 23,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"engel\": false}"
+      }
+     ]
+    },
+    {
+     "id": 105,
+     "name": "birlesik:konfMasa1,konfMasa2,konfMasa2,konfMasa2,konfMasa3",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 228,
+     "y": 420,
+     "width": 85,
+     "height": 34
+    },
+    {
+     "id": 106,
+     "name": "koltukArka",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 230,
+     "y": 453,
+     "width": 16,
+     "height": 23,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"engel\": false}"
+      }
+     ]
+    },
+    {
+     "id": 107,
+     "name": "koltukArka",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 252,
+     "y": 453,
+     "width": 16,
+     "height": 23,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"engel\": false}"
+      }
+     ]
+    },
+    {
+     "id": 108,
+     "name": "koltukArka",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 274,
+     "y": 453,
+     "width": 16,
+     "height": 23,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"engel\": false}"
+      }
+     ]
+    },
+    {
+     "id": 109,
+     "name": "koltukArka",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 296,
+     "y": 453,
+     "width": 16,
+     "height": 23,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"engel\": false}"
+      }
+     ]
+    },
+    {
+     "id": 110,
+     "name": "bitki1",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 342,
+     "y": 402,
+     "width": 16,
+     "height": 28
+    },
+    {
+     "id": 111,
+     "name": "bitki2",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 182,
+     "y": 486,
+     "width": 16,
+     "height": 18
+    },
+    {
+     "id": 112,
+     "name": "yanginTupu",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 188,
+     "y": 394,
+     "width": 12,
+     "height": 18
+    },
+    {
+     "id": 113,
+     "name": "tabloCimen",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 196,
+     "y": 362,
+     "width": 28,
+     "height": 13,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"duvar\": true}"
+      }
+     ]
+    },
+    {
+     "id": 114,
+     "name": "tvStudyo",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 430,
+     "y": 354,
+     "width": 124,
+     "height": 28,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"duvar\": true}"
+      },
+      {
+       "name": "liste",
+       "type": "string",
+       "value": "ekranlar:studyo"
+      }
+     ]
+    },
+    {
+     "id": 115,
+     "name": "birlesik:spikerSol,spikerOrta,spikerLogo,spikerOrta,spikerSag",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 434,
+     "y": 422,
+     "width": 76,
+     "height": 22,
+     "properties": [
+      {
+       "name": "koltuk",
+       "type": "string",
+       "value": "29,26"
+      }
+     ]
+    },
+    {
+     "id": 116,
+     "name": "kamera",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 436,
+     "y": 476,
+     "width": 17,
+     "height": 24
+    },
+    {
+     "id": 117,
+     "name": "kamera2",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 506,
+     "y": 479,
+     "width": 16,
+     "height": 21
+    },
+    {
+     "id": 118,
+     "name": "isik",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 386,
+     "y": 430,
+     "width": 19,
+     "height": 40
+    },
+    {
+     "id": 119,
+     "name": "isik2",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 554,
+     "y": 430,
+     "width": 16,
+     "height": 40
+    },
+    {
+     "id": 120,
+     "name": "koltukStudyo",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 380,
+     "y": 483,
+     "width": 22,
+     "height": 23
+    },
+    {
+     "id": 121,
+     "name": "kagitStudyo",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 476,
+     "y": 425,
+     "width": 8,
+     "height": 10,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"engel\": false, \"sira\": 456}"
+      }
+     ]
+    },
+    {
+     "id": 122,
+     "name": "sunucu",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 584,
+     "y": 390,
+     "width": 23,
+     "height": 34,
+     "properties": [
+      {
+       "name": "liste",
+       "type": "string",
+       "value": "sunucular"
+      }
+     ]
+    },
+    {
+     "id": 123,
+     "name": "sunucu",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 608,
+     "y": 390,
+     "width": 23,
+     "height": 34,
+     "properties": [
+      {
+       "name": "liste",
+       "type": "string",
+       "value": "sunucular"
+      }
+     ]
+    },
+    {
+     "id": 124,
+     "name": "sunucu",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 632,
+     "y": 390,
+     "width": 23,
+     "height": 34,
+     "properties": [
+      {
+       "name": "liste",
+       "type": "string",
+       "value": "sunucular"
+      }
+     ]
+    },
+    {
+     "id": 125,
+     "name": "C.yayinTabelasi()",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 704,
+     "y": 362,
+     "width": 36,
+     "height": 12,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"duvar\": true}"
+      },
+      {
+       "name": "liste",
+       "type": "string",
+       "value": "ekranlar:yayin"
+      }
+     ]
+    },
+    {
+     "id": 126,
+     "name": "calismaMasasi",
+     "type": "masa",
+     "visible": true,
+     "rotation": 0,
+     "x": 688,
+     "y": 448,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"genis\": true, \"sahip\": \"dagitici\", \"ikili\": true}"
+      }
+     ]
+    },
+    {
+     "id": 127,
+     "name": "bitki1",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 746,
+     "y": 478,
+     "width": 16,
+     "height": 28
+    },
+    {
+     "id": 128,
+     "name": "dosyaDolabi2",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 748,
+     "y": 406,
+     "width": 13,
+     "height": 22,
+     "properties": [
+      {
+       "name": "ops",
+       "type": "string",
+       "value": "{\"golge\": true}"
+      }
+     ]
+    },
+    {
+     "id": 129,
+     "name": "bitki2",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 584,
+     "y": 488,
+     "width": 16,
+     "height": 18
+    },
+    {
+     "id": 150,
+     "name": "gardirop",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 196,
+     "y": 27,
+     "width": 31,
+     "height": 39
+    },
+    {
+     "id": 151,
+     "name": "askilik",
+     "type": "ekle",
+     "visible": true,
+     "rotation": 0,
+     "x": 229,
+     "y": 36,
+     "width": 16,
+     "height": 30
+    }
+   ],
+   "opacity": 1,
+   "visible": true,
+   "x": 0,
+   "y": 0,
+   "color": "#9be35a"
+  },
+  {
+   "id": 4,
+   "name": "noktalar",
+   "type": "objectgroup",
+   "draworder": "index",
+   "objects": [
+    {
+     "id": 147,
+     "name": "kahve",
+     "type": "nokta",
+     "x": 128,
+     "y": 400,
+     "width": 16,
+     "height": 16,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 148,
+     "name": "yazici",
+     "type": "nokta",
+     "x": 528,
+     "y": 320,
+     "width": 16,
+     "height": 16,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 149,
+     "name": "oyuncu",
+     "type": "nokta",
+     "x": 288,
+     "y": 96,
+     "width": 16,
+     "height": 16,
+     "rotation": 0,
+     "visible": true
+    }
+   ],
+   "opacity": 1,
+   "visible": true,
+   "x": 0,
+   "y": 0,
+   "color": "#ee5ad0"
+  }
+ ]
+}

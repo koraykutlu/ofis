@@ -1,0 +1,16 @@
+﻿{
+  "name": "Ofis",
+  "short_name": "Ofis",
+  "description": "Piksel ofis oyunu, ikinci beyne bağlı",
+  "start_url": "/",
+  "scope": "/",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "any",
+  "background_color": "#14161c",
+  "theme_color": "#14161c",
+  "icons": [
+    { "src": "varliklar/ofis-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "varliklar/ofis-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
