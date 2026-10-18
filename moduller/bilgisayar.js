@@ -94,7 +94,7 @@
 
   // ---------- görünüm ----------
   const CSS = `
-  #bos { position:absolute; inset:0; z-index:30; display:flex; align-items:center; justify-content:center; padding:5% 7% 10%; box-sizing:border-box; background:rgba(6,7,10,.62); }   /* karartma tüm ofisi kaplar (yarıda kalmaz); monitör ortada açılır, ofis arkada soluk görünür */
+  #bos { position:absolute; inset:0; z-index:30; display:flex; align-items:center; justify-content:center; padding:4vh 6vw 8vh; box-sizing:border-box; background:rgba(6,7,10,.62); container-type:size; }   /* karartma tüm ofisi kaplar (yarıda kalmaz); monitör ortada açılır, ofis arkada soluk görünür */
   #bos[hidden], #bos [hidden] { display:none !important; }
   /* tema değişkenleri: koyu (varsayılan) / açık; "otomatik" ofisin saatine göre seçer (gorunumUygula) */
   #bos { --os-yazi:#eceef5; --os-soluk:#9aa0b4; --os-p:#cfd1da; --os-vy:var(--vurgu); --os-kenar:#3a3f53; --os-kart:rgba(18,20,30,.7); --os-oge:rgba(31,35,51,.92); --os-oge-kenar:#343a50;
@@ -106,7 +106,8 @@
     --os-cip:#e7ebf2; --os-cubuk:rgba(246,248,252,.68); --os-balon:#eef1f7; --os-balon-kenar:#d6dbe5; --os-ben:color-mix(in srgb, var(--vurgu) 24%, #fff); --os-ben-kenar:color-mix(in srgb, var(--vurgu) 60%, #fff);
     --os-secim:color-mix(in srgb, var(--vurgu) 22%, transparent); --os-zemin:#dfe5ef; --os-golge:0 16px 40px rgba(30,40,70,.28); }
   #bos[data-yazi="piksel"] { --os-govde:"Pixelify Sans", system-ui, sans-serif; }
-  #bos .bos-ekran { position:relative; width:min(980px, calc(100% - 24px)); height:min(660px, calc(100% - 24px)); display:flex; flex-direction:column; background:#2a2d38; border:4px solid #12141a;
+  #bos .bos-ekran { position:relative; box-sizing:border-box; aspect-ratio:16 / 10; width:min(1040px, calc(100cqw - 24px), calc((100cqh - 24px) * 1.6)); height:auto;   /* gerçek monitör oranı: pencere kısa ya da dar olsa da 16:10 kalır */
+    display:flex; flex-direction:column; background:#2a2d38; border:4px solid #12141a;
     border-radius:14px; box-shadow:0 0 0 2px #3c4152 inset, 0 18px 50px rgba(0,0,0,.6); padding:12px 12px 8px; transform-origin:var(--bx,50%) var(--by,50%); }
   #bos.giris .bos-ekran { animation:bosGir .48s cubic-bezier(.2,.9,.25,1) both; } #bos.cikis .bos-ekran { animation:bosCik .32s ease-in both; }
   @keyframes bosGir { from { transform:scale(.03); opacity:.2; } to { transform:scale(1); opacity:1; } }
