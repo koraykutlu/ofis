@@ -37,8 +37,12 @@
 31. **Halıda 5 sn durmak:** kalpler ve huzurlu bir cümle (`etkilesim > hali` bölgesi tanımlıysa).
 32. **Gece 00:30'dan sonra** (gerçek saatte) asistan uyku hedefini bir kez hatırlatır (`etkilesim > uyku_hedefi` tanımlıysa).
 33. **Yazılan gizli kelimeler** (oyun ekranındayken): `selam` (Ada selamlar), `pembe` (10 sn ekran tonu güçlenir), `uyku`, `kahve`, `somine` (cozy modunu açar); kişiye özel kelimeler `etkilesim > gizli_kelimeler`.
-34. **Odak modu:** Ada'ya E → "25 dakikalık odak başlat" ya da yönetim odasındaki odak noktasına E. Bir iş seçersin ("Bugün" kartından), cozy mod açılır, başlıkta geri sayım çıkar; bitince Ofis kutlar ve iş listede tiklenir. Sayacı tıklayıp bırakabilirsin.
+34. **Odak modu (pomodoro):** Ada'ya E → odak ya da yönetim odasındaki odak noktasına E. 25 dk odak, 5 dk mola, 4 turda bir 15 dk uzun mola. Odakta masana oturursun, üstünde kırmızı "ODAKTA" tabelası asılır, ekip fısıldaşır, Sütlaç yanına gelip uyur. Tur bitince "ne oldu?" (İlerledim / Bitirdim / Takıldım), sonra kahveye yürürsün ve biri sohbete gelir. Başka sekmeden dönünce Ada kaldığın yeri söyler. BeyinOS > Odak'ta bugünkü turlar ve haftalık grafik.
 35. **Gün kapatma:** "🌙 Ofisi kapat" düğmesine basınca önce Ada sana gelir: bugün neler bitti, yarının tek ilk adımı. "Tamam, ofisi kapat" karneyi açar ve ekibi eve gönderir; "Biraz daha kalayım" vazgeçirir. Yedek otomatik kapanışta konuşma yoktur.
 36. **Sesler:** cozy modda şömine çıtırtısı (şömineye yaklaştıkça artar); Atölye'ye girince kodla üretilen lofi müzik (Cmaj7-Am7-Dm7-G7 döngüsü, yumuşak piyano, bas, plak çıtırtısı).
 37. **Ses ayarları (⚙️ Ayarlar):** Atölye müziğini aç/kapat, tarz seç (Lofi, Caz, Piyano), şömine sesini aç/kapat. Odak modu başlayınca müzik her odada çalar.
 38. **Düzenle çekmecesi:** üstten yüzer; bir eşya seçince kendiliğinden toplanır (üstteki "▼ Düzenle" tutacına dokunup ya da aşağı çekip aç, yukarı çekip kapat). Haritadaki eşyaya dokununca alırsın; 🗑 Kaldır ile silersin, "Geri al" ile geri gelir.
+39. **BeyinOS'ta çok gizli klasör:** masaüstündeki soluk "çok gizli" klasörü şifreli. İpucu: ofisin en tüylü çalışanı. İçinde ekibin birbirine yazdığı notlar var.
+40. **Gece 02:00-05:00 bilgisayar:** bu saatte bilgisayarı açarsan Ada uyumanı söyler, ekran kısa süre sonra kararır (ekran koruyucuda yüzen Sütlaç). Boşta kalınca gündüz de 3 dakikada gelir.
+41. **Sütlaç klavyende:** bilgisayar açıkken Sütlaç ara sıra klavyene çıkar ve yazar; açık yazı alanına da "jjjjkkkk;;;" düşer. "Sev ve indir" ile indirebilirsin.
+42. **Sütlaç Koşusu:** BeyinOS'taki oyun. Sütlaç fareleri kovalar, her fare arkasına bir yumak ekler; yumağa ya da duvara çarpınca uyuyakalır.

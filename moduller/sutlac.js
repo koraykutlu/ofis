@@ -180,6 +180,23 @@
     kediGuncelle, kediCiz, kediSev, klavyedenIn, sutlacCagir,
     partiBasladi() { const { kedi } = I(); kediGit(rastgeleKaro(8) || [Math.round(kedi.x), Math.round(kedi.y)], otur(0.3), 7); },   // kedi de koşturur
     canliCiz() { const { f, mama } = I(); f.drawImage(MAMA_IMG[mama.dolu ? 1 : 0], 130, 485); },
+    // Odak başlayınca (etkilesim.js) oyuncunun masasının yanına gelip uyur
+    odakBasladi(M) {
+      const ic = I(), { kedi } = ic;
+      if (kedi.durum === "klavye" || ic.mama.dolu) return;
+      kediGit(ic.enYakinYurur(M[0] + 1, M[1] + 1), () => { kedi.durum = "yat"; kedi.sure = 240 + Math.random() * 240; kedi.bakis = -1; kedi.balon = "Mrr… (ben de odaklanıyorum)"; kedi.balonSon = I().zaman + 3; }, 3);
+    },
+    // BeyinOS açıkken oyuncunun klavyesine çıkar (bilgisayar.js sürprizi); M = oyuncunun masa noktası, monitör iki karo yukarıda
+    kediOyuncuKlavye(M) {
+      const ic = I(), { kedi, T, oyuncu } = ic;
+      if (!oyuncu || kedi.durum === "klavye" || kedi.durum === "ye" || ic.mama.dolu) return false;
+      kediGit(ic.yanKaro(oyuncu), () => {
+        if (!window.OFIS_BILGISAYAR || !window.OFIS_BILGISAYAR.acik()) { otur(1)(); return; }
+        kedi.durum = "klavye"; kedi.ust = { px: M[0] * T, py: (M[1] - 2) * T + 6, sira: (M[1] - 2) * T + 40 }; kedi.klavyeAjan = oyuncu; kedi.sure = 12 + Math.random() * 6;
+        ic.sesKonum("miyav", kedi.x, kedi.y);
+      }, 4);
+      return true;
+    },
     test: { klavye: () => klavyeyeCik(), sutlac: () => sutlacCagir() },
   });
 })();

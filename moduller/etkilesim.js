@@ -1,6 +1,6 @@
 // Ek etkileşimler ve gizli sürprizler: cozy mod (lamba + şömine + ışık dizisi), buzdolabı (mutfaktakinden yemek önerisi), mikrodalga,
 // kitaplık, çerçeve (gizli not), toplantı ekranında yaklaşan tarihler, tahtada "tek küçük adım", telsiz masasında kanal gezintisi, halıda dinlenmek,
-// odak modu, "Ofisi kapat" gün kapatma konuşması ve yazılan gizli kelimeler (selam, pembe, uyku, kahve, somine). Çekirdeğe MOD kancalarıyla bağlanır (window.OFIS_IC).
+// odak modu (pomodoro: odak/mola turları, ofis tepkileri, istatistik), "Ofisi kapat" gün kapatma konuşması ve yazılan gizli kelimeler (selam, pembe, uyku, kahve, somine). Çekirdeğe MOD kancalarıyla bağlanır (window.OFIS_IC).
 // Gizli şeylerin listesi: SURPRIZLER.md ("Yeni sürprizler" bölümü).
 // Kişiye özel içerik kodda değil kisi.json "etkilesim" alanındadır (kisi.js > OFIS_KISI.etkilesim): tarihler (sınav/teslim), kitaplar, kanallar, gizli_kelimeler,
 // hali (halıda dinlenme bölgesi), uyku_hedefi (gece hatırlatması), cerceve_notlari. Hiçbiri yoksa genel varsayılanlar kullanılır.
@@ -51,7 +51,7 @@
   // ---------- etkileşim noktaları (karo koordinatı; r: erişim yarıçapı) ----------
   const NOKTALAR = [
     { x: 22.9, y: 8.3, r: 1.7, etiket: () => (cozy ? "Cozy modunu kapat" : "Cozy modunu aç (lamba)"), fn: () => cozyDegis() },
-    { x: 18, y: 7.6, r: 1.9, etiket: () => (odak ? "Odağı bırak" : `Odak başlat (${ODAK_DK} dk)`), fn: () => odakBaslat() },
+    { x: 18, y: 7.6, r: 1.9, etiket: () => (!odak ? `Odak başlat (pomodoro ${ODAK_DK} dk)` : odak.faz === "mola" ? "Molayı yönet" : "Odağı bırak"), fn: () => odakBaslat() },
     { x: 13.9, y: 6.5, r: 1.7, etiket: () => (cozy ? "Şöminenin başına otur" : "Şöminenin yanında dur"), fn: somineTemas },
     { x: 16, y: 3.4, r: 2.2, etiket: () => "Kitaplığa bak", fn: kitaplik },
     { x: 23.2, y: 2.4, r: 2.0, etiket: () => "Çerçevelere bak", fn: cerceve },
@@ -80,21 +80,48 @@
     } else { if (sessiz !== true) konus(ic.oyuncu, "Işıkları kıstım."); ic.gunluk("Cozy mod kapandı.", true); }
   }
 
-  // ---------- odak modu: 25 dakika, cozy mod açılır, bitince Ofis kutlar ve seçtiğin iş tiklenir ----------
+  // ---------- odak modu (pomodoro): 25 dk odak → 5 dk mola, 4 turda bir 15 dk uzun mola. Ofis tepki verir: oyuncu masasına oturur, cozy lamba +
+  // masanın üstünde "ODAKTA" tabelası, odak müziği, ekip ara ara fısıldaşır, Sütlaç masanın yanına gelip uyur (sutlac.js > odakBasladi). Tur bitince
+  // "ne oldu?" sorulur (İlerledim / Bitirdim: iş tiklenir / Takıldım: küçük adım önerisi); molada oyuncu kahveye yürür, ekipten biri sohbete gelir
+  // (uzun molada iki-üç kişi + küçük parti). Başka sekmeye geçip dönünce Ada kaldığın yeri hatırlatır (ceza yok: iş başka pencerede de sürebilir).
+  // İstatistik bu tarayıcıda: localStorage "ofis-odak-istatistik" {gün: {tur, dk, notlar}}; BeyinOS Odak uygulaması window.OFIS_ODAK ile okur.
   // Ofisteki olaylar ikinci beyne kaydolur (sunucu: notes/ofis-sohbet/<gün>.md); sunucu yoksa sessizce atlanır
   const kayit = (metin) => { try { fetch("/api/ofis-kayit", { method: "POST", headers: { "X-Ofis-Anahtar": I().ANAHTAR, "Content-Type": "application/json" }, body: JSON.stringify({ metin }) }).catch(() => {}); } catch (e) { /* yoksay */ } };
-  const ODAK_DK = 25, ODAK_DEPO = "ofis-odak";
-  let odak = null, odakZ = 0;
+  const ODAK_DK = 25, MOLA_DK = 5, UZUN_DK = 15, TUR = 4, ODAK_DEPO = "ofis-odak", IST_DEPO = "ofis-odak-istatistik";
+  let odak = null, odakZ = 0, fisZ = 0, gizliBas = 0;
   const odakKaydet = () => { try { if (odak) localStorage.setItem(ODAK_DEPO, JSON.stringify(odak)); else localStorage.removeItem(ODAK_DEPO); } catch (e) { /* depolama kapalı */ } };
   const iki = (n) => String(n).padStart(2, "0");
+  const gunAnahtar = (t) => { const d = new Date(t); return `${d.getFullYear()}-${iki(d.getMonth() + 1)}-${iki(d.getDate())}`; };
+  const MASA_N = () => (window.HARITA && HARITA.noktalar && HARITA.noktalar.oyuncu) || [18, 6];
+  const muzik = (a) => { if (window.SES && window.SES.odakMuzigi) window.SES.odakMuzigi(a); };
+  const FISILTI = ["(fısıltıyla) Şşt, odakta.", "🤫", "(fısıltı) Sonra konuşuruz.", "(fısıltı) Kahveyi ben alırım, sen devam.", "(fısıltı) Sütlaç bile sessiz bak."];
+  const MOLA_SOZ = ["Mola mı? Ben de tam kahve alacaktım.", "Sütlaç bugün üç kez klavyeme çıktı, rekor.", "5 dakika ekran yok, söz mü?", "Biraz yürüyelim mi? Bacaklar unutuyor.",
+    "Su içtin mi bugün?", "Odak nasıl gidiyor? Yüzünden belli, iyi.", "Bu kahve makinesi bugün cömert.", "Mola da işin parçası, demişler."];
+  const MOLA_CEVAP = ["Haha, aynen.", "Kahve şart.", "Biraz nefes alıyorum.", "İyi gidiyor, sağ ol.", "Bir bardak su, tamam."];
+  function istOku() { try { const s = JSON.parse(localStorage.getItem(IST_DEPO) || "{}"); return s && typeof s === "object" ? s : {}; } catch (e) { return {}; } }
+  function istYaz(fn) {
+    const s = istOku(), k = gunAnahtar(Date.now()), g = (s[k] = s[k] || { tur: 0, dk: 0, notlar: [] }); fn(g);
+    const anahtarlar = Object.keys(s).sort(); while (anahtarlar.length > 120) delete s[anahtarlar.shift()];
+    try { localStorage.setItem(IST_DEPO, JSON.stringify(s)); } catch (e) { /* yok */ }
+  }
+  function istatistik() {
+    const s = istOku(), bos = () => ({ tur: 0, dk: 0, notlar: [] }), hafta = [];
+    for (let i = 6; i >= 0; i--) { const k = gunAnahtar(Date.now() - i * 864e5); hafta.push({ tarih: k, ...bos(), ...(s[k] || {}) }); }
+    let seri = 0;
+    for (let i = 0; i < 120; i++) { const g = s[gunAnahtar(Date.now() - i * 864e5)]; if (g && g.tur) seri++; else if (i > 0) break; }
+    return { bugun: { ...bos(), ...(s[gunAnahtar(Date.now())] || {}) }, hafta, seri, toplamTur: Object.values(s).reduce((t, g) => t + (g.tur || 0), 0) };
+  }
   function odakChip() {
     const c = document.getElementById("odakSaat"); if (!c) return;
     if (!odak) { c.hidden = true; return; }
-    const kalan = Math.max(0, odak.bitis - Date.now());
-    c.textContent = `⏱ ${iki(Math.floor(kalan / 60000))}:${iki(Math.floor((kalan % 60000) / 1000))}`; c.hidden = false;
+    const kalan = Math.max(0, odak.bitis - Date.now()), mm = `${iki(Math.floor(kalan / 60000))}:${iki(Math.floor((kalan % 60000) / 1000))}`;
+    c.textContent = odak.faz === "odak" ? `⏱ ${mm} · ${odak.tur}/${TUR}` : `☕ ${mm} ${odak.uzun ? "uzun mola" : "mola"}`; c.hidden = false;
   }
   function odakSor() {
-    sor(`Odak sürüyor${odak && odak.gorev ? ": " + odak.gorev.ad : ""}. Bırakmak mı istiyorsun?`, [
+    if (odak && odak.faz === "mola") return sor(`${odak.uzun ? "Uzun mola" : "Mola"} sürüyor. Erken dönmek ister misin?`, [
+      { etiket: "Molaya devam", fn: kapat }, { etiket: "Molayı bitir", fn: () => { kapat(); molaBitir(); } }, { etiket: "Bugünlük bırak", fn: () => { kapat(); odakBirak(); } },
+    ]);
+    sor(`Odak sürüyor (tur ${odak ? odak.tur : 1}/${TUR})${odak && odak.gorev ? ": " + odak.gorev.ad : ""}. Bırakmak mı istiyorsun?`, [
       { etiket: "Devam et", fn: kapat }, { etiket: "Odağı bırak", fn: () => { kapat(); odakBirak(); } },
     ]);
   }
@@ -102,38 +129,121 @@
     if (odak) return odakSor();
     const P = window.OFIS_PANEL, acik = P ? P.acikGorevler().slice(0, 4) : [];
     const sec = acik.map((g) => ({ etiket: g.ad.length > 36 ? g.ad.slice(0, 35) + "…" : g.ad, fn: () => odakBasla(g) }));
-    sor(`${ODAK_DK} dakikalık odak. Neye başlıyoruz? Küçük bir ilk adım yeter.`, [...sec, { etiket: "Serbest odak", fn: () => odakBasla(null) }, { etiket: "Vazgeç", fn: kapat }]);
+    sor(`Pomodoro: ${ODAK_DK} dk odak, ${MOLA_DK} dk mola, ${TUR} turda bir uzun mola. Neye başlıyoruz? Küçük bir ilk adım yeter.`, [...sec, { etiket: "Serbest odak", fn: () => odakBasla(null) }, { etiket: "Vazgeç", fn: kapat }]);
   }
-  function odakBasla(gorev) {
+  function masayaOtur() {
+    const ic = I(), o = ic.oyuncu, M = MASA_N();
+    if (!o || (window.OFIS_BILGISAYAR && window.OFIS_BILGISAYAR.acik())) return;
+    const otur = () => { ic.yonBak(o, { x: M[0], y: M[1] - 2 }); o.yazSon = ic.zaman + 1e6; };
+    if (Math.hypot(o.x - M[0], o.y - M[1]) < 0.6) otur(); else ic.gonder(o, M, otur);
+  }
+  function odakSahne(acik) {
+    const ic = I(); clearInterval(fisZ); muzik(acik);
+    if (!acik) { if (ic.oyuncu && !(window.OFIS_BILGISAYAR && window.OFIS_BILGISAYAR.acik())) ic.oyuncu.yazSon = 0; return; }
+    if (!cozy) cozyDegis(true);
+    ic.MOD("odakBasladi", MASA_N());
+    fisZ = setInterval(() => {
+      if (!odak || odak.faz !== "odak" || document.hidden || Math.random() < 0.4) return;
+      const l = ic.ajanlar.filter((a) => !a.oyuncu && !a.disarda && !a.konusuyor && !ic.mesgul(a));
+      if (l.length) konus(rast(l), rast(FISILTI));
+    }, 70000);
+  }
+  function odakBasla(gorev, tur = 1) {
     const ic = I(); kapat();
-    odak = { bitis: Date.now() + ODAK_DK * 60000, sure: ODAK_DK, gorev: gorev ? { id: gorev.id, ad: gorev.ad } : null };
-    odakKaydet(); if (!cozy) cozyDegis(true); if (window.SES && window.SES.odakMuzigi) window.SES.odakMuzigi(true);
-    ic.ses("gorev"); ic.kalpler(ic.oyuncu, 1);
-    konus(ic.oyuncu, gorev && gorev.ipucu ? `${ODAK_DK} dakika başladı. İlk adım: ${gorev.ipucu}` : `${ODAK_DK} dakika başladı. Sadece başla.`);
-    const ada = ic.bul("ada"); if (ada && !ada.disarda) ic.sonra(2.5, () => konus(ada, "Ben yanındayım. Süre bitince haber veririm."));
-    ic.gunluk(`Odak başladı (${ODAK_DK} dk${gorev ? ": " + gorev.ad : ""}).`, true); kayit(`Odak başladı (${ODAK_DK} dk): ${gorev ? gorev.ad : "serbest"}`);
+    odak = { faz: "odak", tur, bitis: Date.now() + ODAK_DK * 60000, sure: ODAK_DK, gorev: gorev ? { id: gorev.id, ad: gorev.ad } : null };
+    odakKaydet(); ic.ses("gorev"); ic.kalpler(ic.oyuncu, 1);
+    masayaOtur(); odakSahne(true);
+    konus(ic.oyuncu, tur > 1 ? `Tur ${tur}/${TUR}. Devam.` : gorev && gorev.ipucu ? `${ODAK_DK} dakika başladı. İlk adım: ${gorev.ipucu}` : `${ODAK_DK} dakika başladı. Sadece başla.`);
+    const ada = ic.bul("ada"); if (ada && !ada.disarda && tur === 1) ic.sonra(2.5, () => konus(ada, "Ben yanındayım. Kapıya tabelayı astım, kimse rahatsız etmez."));
+    ic.gunluk(`Odak başladı (tur ${tur}/${TUR}${gorev ? ": " + gorev.ad : ""}).`, true); kayit(`Odak başladı (tur ${tur}, ${ODAK_DK} dk): ${gorev ? gorev.ad : "serbest"}`);
     odakDon();
   }
-  function odakDon() { clearInterval(odakZ); odakChip(); odakZ = setInterval(() => { if (!odak) return clearInterval(odakZ); odakChip(); if (Date.now() >= odak.bitis) odakBitir(); }, 1000); }
-  function odakBirak() { kayit(`Odak yarıda bırakıldı${odak && odak.gorev ? ": " + odak.gorev.ad : ""}`); odak = null; odakKaydet(); odakChip(); clearInterval(odakZ); if (window.SES && window.SES.odakMuzigi) window.SES.odakMuzigi(false); konus(I().oyuncu, "Odağı bıraktım. Gerekirse yeniden başlarız."); I().gunluk("Odak bırakıldı.", true); }
+  function odakDon() {
+    clearInterval(odakZ); odakChip();
+    odakZ = setInterval(() => { if (!odak) return clearInterval(odakZ); odakChip(); if (Date.now() >= odak.bitis) (odak.faz === "odak" ? odakBitir : molaBitir)(); }, 1000);
+  }
+  function odakBirak() {
+    const f = odak && odak.faz; kayit(`${f === "mola" ? "Mola" : "Odak"} bırakıldı${odak && odak.gorev ? ": " + odak.gorev.ad : ""}`);
+    odak = null; odakKaydet(); odakChip(); clearInterval(odakZ); odakSahne(false);
+    konus(I().oyuncu, f === "mola" ? "Bugünlük bu kadar. İyi iş çıkardık." : "Odağı bıraktım. Gerekirse yeniden başlarız."); I().gunluk("Odak bırakıldı.", true);
+  }
   function odakBitir() {
-    const ic = I(), g = odak && odak.gorev; odak = null; odakKaydet(); odakChip(); clearInterval(odakZ); if (window.SES && window.SES.odakMuzigi) window.SES.odakMuzigi(false);
-    ic.efekt.parti = Math.max(ic.efekt.parti, ic.zaman + 6); ic.ses("karne"); ic.ses("parti"); ic.kalpler(ic.oyuncu, 6);
-    ic.gunluk(`Odak bitti${g ? ": " + g.ad : ""}. Tebrikler!`, true); kayit(`Odak tamamlandı (${ODAK_DK} dk): ${g ? g.ad + " (listede tiklendi)" : "serbest"}`);
-    const oncekiBaslik = document.title; document.title = "✅ Odak bitti · " + oncekiBaslik; setTimeout(() => { document.title = oncekiBaslik; }, 20000);
-    for (const a of ic.ajanlar) if (!a.oyuncu && !a.disarda && !a.konusuyor) ic.sonra(Math.random() * 1.2, () => konus(a, rast(["Başardın!", "Harika odak!", "Tebrikler!", "Alkışlar sana 👏"])));
-    if (g && window.OFIS_PANEL) window.OFIS_PANEL.isaretle(g.id, true);
-    sor(`${ODAK_DK} dakika tamam!${g ? " \"" + g.ad + "\" listede tiklendi." : ""} Kendine kısa bir mola hak ettin.`, [
-      { etiket: "Bir tur daha", fn: () => { kapat(); odakBasla(g); } },
-      { etiket: "Mola veriyorum", fn: () => { kapat(); konus(ic.oyuncu, "5 dakika mola. Su iç, biraz hareket et."); } },
+    const ic = I(), m = odak, g = m && m.gorev, tur = m ? m.tur : 1, uzun = tur % TUR === 0;
+    odak = null; odakKaydet(); odakChip(); clearInterval(odakZ); odakSahne(false);
+    istYaz((x) => { x.tur++; x.dk += ODAK_DK; });
+    ic.ses("karne"); ic.kalpler(ic.oyuncu, 4); if (uzun) { ic.efekt.parti = Math.max(ic.efekt.parti, ic.zaman + 6); ic.ses("parti"); }
+    ic.gunluk(`Odak turu ${tur} bitti${g ? ": " + g.ad : ""}.`, true);
+    const oncekiBaslik = document.title; document.title = "✅ Tur bitti · " + oncekiBaslik; setTimeout(() => { document.title = oncekiBaslik; }, 20000);
+    const alkis = ic.ajanlar.filter((a) => !a.oyuncu && !a.disarda && !a.konusuyor); for (let i = 0; i < Math.min(uzun ? 4 : 2, alkis.length); i++) { const a = alkis.splice(Math.floor(Math.random() * alkis.length), 1)[0]; ic.sonra(Math.random() * 1.2, () => konus(a, rast(["Güzel tur!", "Harika odak!", "Bir tur daha cebe.", "Alkışlar 👏"]))); }
+    const sonu = (durum, not) => {
+      kapat(); istYaz((x) => { x.notlar = [...(x.notlar || []), `Tur ${tur}: ${durum}${g ? " · " + g.ad : ""}`].slice(-20); });
+      kayit(`Odak turu ${tur} (${ODAK_DK} dk): ${durum}${g ? " · " + g.ad : ""}`);
+      if (not) { const ada = ic.bul("ada"); if (ada && !ada.disarda) ic.sonra(0.8, () => konus(ada, not)); }
+      molaBasla(durum === "bitirdim" ? null : g, tur, uzun);
+    };
+    sor(`Tur ${tur}/${TUR} tamam!${g ? " (\"" + g.ad + "\")" : ""} Bu turda ne oldu?`, [
+      { etiket: "İlerledim", fn: () => sonu("ilerledim") },
+      ...(g ? [{ etiket: "Bitirdim, tikle", fn: () => { if (window.OFIS_PANEL) window.OFIS_PANEL.isaretle(g.id, true); sonu("bitirdim", "Tiklendi! Sıradakine molanın ardından bakarız."); } }] : []),
+      { etiket: "Takıldım", fn: () => sonu("takıldım", "Takılınca adımı küçült: " + rast(KUCUK_ADIMLAR)) },
     ]);
   }
-  function odakDevam() {   // sayfa yenilenirse süren odak kaldığı yerden devam eder; süresi dolmuşsa sessizce silinir (tik atılmaz)
+  function molaBasla(gorev, tur, uzun) {
+    const ic = I(), dk = uzun ? UZUN_DK : MOLA_DK, o = ic.oyuncu;
+    odak = { faz: "mola", tur, uzun, bitis: Date.now() + dk * 60000, sure: dk, gorev };
+    odakKaydet(); odakDon();
+    konus(o, uzun ? `${TUR} tur bitti! ${dk} dakika uzun mola.` : `${dk} dakika mola. Kahve!`);
+    if (window.OFIS_BILGISAYAR && window.OFIS_BILGISAYAR.acik()) window.OFIS_BILGISAYAR.kapat();
+    ic.gonder(o, ic.KAHVE, () => {
+      ic.sesKonum("kahve", o.x, o.y);
+      const bos = ic.ajanlar.filter((a) => !a.oyuncu && !a.disarda && !a.konusuyor && !ic.mesgul(a) && ic.yerinde(a));
+      for (let i = 0; i < Math.min(uzun ? 3 : 1, bos.length); i++) {
+        const a = bos.splice(Math.floor(Math.random() * bos.length), 1)[0]; a.ozel = "mola";
+        ic.sonra(i * 1.5, () => ic.gonder(a, ic.ziyaretNoktasi(o), () => {
+          ic.yonBak(a, o); konus(a, rast(MOLA_SOZ)); ic.sonra(3, () => konus(o, rast(MOLA_CEVAP)));
+          ic.sonra(9 + i * 2, () => ic.eveDon(a, () => (a.ozel = null)));
+        }));
+      }
+    });
+  }
+  function molaBitir() {
+    const ic = I(), m = odak; if (!m) return;
+    odak = null; odakKaydet(); odakChip(); clearInterval(odakZ); ic.ses("gorev");
+    const oncekiBaslik = document.title; document.title = "☕ Mola bitti · " + oncekiBaslik; setTimeout(() => { document.title = oncekiBaslik; }, 15000);
+    const sonraki = m.uzun ? 1 : m.tur + 1;
+    sor(`Mola bitti. ${m.uzun ? "Yeni bir set" : `Tur ${sonraki}/${TUR}`} başlasın mı?${m.gorev ? " (\"" + m.gorev.ad + "\")" : ""}`, [
+      { etiket: m.uzun ? "Yeni set başlat" : `Tur ${sonraki} başlat`, fn: () => odakBasla(m.gorev, sonraki) },
+      { etiket: "Başka işe geç", fn: () => { kapat(); odakBaslat(); } },
+      { etiket: "Bugünlük yeter", fn: () => { kapat(); konus(ic.oyuncu, "Bugünlük bu kadar. İyi iş!"); } },
+    ]);
+  }
+  function odakDevam() {   // sayfa yenilenirse süren odak/mola kaldığı yerden devam eder; süresi dolmuşsa sessizce silinir (tur sayılmaz)
     try {
       const k = JSON.parse(localStorage.getItem(ODAK_DEPO) || "null");
-      if (k && k.bitis > Date.now()) { odak = k; odakDon(); if (window.SES && window.SES.odakMuzigi) window.SES.odakMuzigi(true); } else if (k) localStorage.removeItem(ODAK_DEPO);
+      if (k && k.bitis > Date.now()) { if (!k.faz) { k.faz = "odak"; k.tur = 1; } odak = k; odakDon(); if (k.faz === "odak") { muzik(true); I().MOD("odakBasladi", MASA_N()); } }
+      else if (k) localStorage.removeItem(ODAK_DEPO);
     } catch (e) { /* bozuk kayıt */ }
   }
+  // Başka sekmeye geçip dönünce: ceza yok, Ada kaldığın yeri hatırlatır (30 sn'den uzun ayrılıklarda)
+  function sekmeDegisti() {
+    if (!odak || odak.faz !== "odak") { gizliBas = 0; return; }
+    if (document.hidden) { gizliBas = Date.now(); return; }
+    if (gizliBas && Date.now() - gizliBas > 30000) {
+      const ic = I(), ada = ic.bul("ada"), kalan = Math.max(1, Math.round((odak.bitis - Date.now()) / 60000));
+      if (ada && !ada.disarda) konus(ada, `Hoş geldin. ${kalan} dk kaldı${odak.gorev ? ", " + odak.gorev.ad : ""}. Kaldığın yerden.`);
+    }
+    gizliBas = 0;
+  }
+  // Masanın üstünde asılı tabela: "ODAKTA" (kırmızı) / "MOLA" (yeşil)
+  function odakTabela() {
+    if (!odak) return;
+    const ic = I(), { f, T } = ic, M = MASA_N(), x = Math.round(M[0] * T - 8), y = Math.round((M[1] - 3) * T - 2);
+    const yazi = odak.faz === "odak" ? "ODAKTA" : "MOLA", renk = odak.faz === "odak" ? "#d9534f" : "#5fa86a";
+    f.fillStyle = "#3a2a1c"; f.fillRect(x + 6, y - 5, 1, 5); f.fillRect(x + 25, y - 5, 1, 5);
+    f.fillStyle = "rgba(0,0,0,.35)"; f.fillRect(x + 1, y + 1, 32, 10); f.fillStyle = renk; f.fillRect(x, y, 32, 10);
+    f.fillStyle = "#fff"; f.font = "7px 'Pixelify Sans', monospace"; f.textAlign = "center"; f.textBaseline = "middle"; f.fillText(yazi, x + 16, y + 5.5);
+    f.textAlign = "start"; f.textBaseline = "alphabetic";
+  }
+  window.OFIS_ODAK = { durum: () => (odak ? { ...odak, turSayisi: TUR } : null), istatistik, baslat: () => odakBaslat() };
 
   // ---------- gün kapatma: "🌙 Ofisi kapat" önce asistanın konuşmasını getirir (biten işler, yarının ilk adımı), sonra karne + çıkış ----------
   // Asistan oyuncunun yanına gelir; "Ofisi kapat" (ya da seçim yapmadan geçmek) ofisi kapatır (karne, ekip eve gider), "Biraz daha kalayım" vazgeçirir.
@@ -303,7 +413,8 @@
   }
 
   (window.OFIS_MODULLER = window.OFIS_MODULLER || []).push({
-    basla() { I().NESNELER.push(...NOKTALAR); odakDevam(); const c = document.getElementById("odakSaat"); if (c) c.onclick = () => { if (odak) odakSor(); }; },
+    basla() { I().NESNELER.push(...NOKTALAR); odakDevam(); document.addEventListener("visibilitychange", sekmeDegisti); const c = document.getElementById("odakSaat"); if (c) c.onclick = () => { if (odak) odakSor(); }; },
+    canliCiz: odakTabela,
     bastan() { cozy = false; kapatma = null; I().ton = I().TON_TABAN; kediGonderildi = false; if (window.SES && window.SES.somine) window.SES.somine(false); },
     odakBaslat,   // Ders koçu diyaloğundan (EYLEMLER.odak) çağrılır
     odakDurum: () => odak,
@@ -315,6 +426,6 @@
       for (const k of KELIMELER) if (harfler.endsWith(k)) { harfler = ""; kelime(k); break; }
     },
     gunKapatma,   // çekirdek "🌙 Ofisi kapat" düğmesinde çağırır (ofis.js); true: konuşma başladı/sürüyor, undefined: başlatılamadı (eski onay kutusu açılır)
-    test: { cozy: () => cozy, cozyDegis, kelime, yemekOner, tarihler: () => TARIHLER.map((x) => x.ad), odakBasla, odakBitir, odakBirak, odak: () => odak, kapatma: () => (kapatma ? kapatma.asama : null) },
+    test: { cozy: () => cozy, cozyDegis, kelime, yemekOner, tarihler: () => TARIHLER.map((x) => x.ad), odakBasla, odakBitir, odakBirak, molaBitir, odak: () => odak, odakIstatistik: istatistik, kapatma: () => (kapatma ? kapatma.asama : null) },
   });
 })();

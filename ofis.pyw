@@ -328,7 +328,7 @@ def companion_ozeti():
 GUNLER = ("Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar")
 
 
-def sistem_istemi(ajan="ada", tam=False):
+def sistem_istemi(ajan="ada", tam=False, dogrudan=False, baglam=""):
     c = COMPANION.name if COMPANION else "🔮 850-Companion"
     core = oku(COMPANION / "Core.md", 6000) if COMPANION else ""
     kurallar = oku(COMPANION / "Kurallar.md", 4000) if COMPANION else ""
@@ -350,6 +350,11 @@ EN SONUNA tek bir öneri bloğu koy; oyun bunu onay kartına çevirir, {kisa} "O
 - ekle: var olan bir notun SONUNA eklenecek metin (yol notes/ altında var olan dosya; önce Read ile bak).
 Blok geçerli JSON olmalı (metindeki satır sonları \\n). "Kaydettim" deme; "onayına sundum" de. Tek cevapta en çok bir öneri.
 """
+    if dogrudan and not tam:   # bilgisayardaki Mesajlar uygulaması + doğrudan yazma ayarı: öneri onay beklemeden kaydedilir (sor)
+        yazma = yazma.replace(f'oyun bunu onay kartına çevirir, {kisa} "Onayla" demeden hiçbir şey yazılmaz:', "bu blok onay beklemeden hemen kaydedilir:").replace(
+            '"Kaydettim" deme; "onayına sundum" de. Tek cevapta en çok bir öneri.', 'Kısaca "kaydettim" de ve nereye kaydettiğini söyle. Tek cevapta en çok üç öneri (her biri ayrı blok).')
+    if baglam:
+        yazma += "\n" + baglam
     return f"""Sen {ad}'sın ({rol}). {kimlik} {tr_ek(KISI["kullanici_adi"], "ın")} piksel ofis oyununda ("{KISI["ofis_adi"]}") onunla (oyunda {KISI["oyuncu_adi"]} olarak görünüyor)
 masanda konuşuyorsun; ofisin diğer çalışanları da onun ikinci beyninin bölümleridir. Konuşma oyun içi bir sohbet kutusunda görünür.
 Senin alanın (önce buradan bak): {odak}. Alanın dışında bir soru gelirse kısaca cevapla, gerekirse "bunu {KISI["asistan_adi"]} daha iyi bilir" de.
@@ -565,12 +570,14 @@ def olay_kaydet(metin):
 
 def oneri_uygula(o):
     tarih = datetime.now().strftime("%d.%m.%Y")
+    kisa = KISI["kullanici_adi"].split()[0]
+    kaynak, onay = ("ofis bilgisayarından", f"{kisa} mesajla istedi") if o.get("dogrudan") else ("ofisten", f"{kisa} onayladı")
     if o["tur"] == "ekle":
         with open(VAULT / o["yol"], "a", encoding="utf-8", newline="") as f:
-            f.write(f"\n\n{o['metin']}\n\n_({o.get('imza', KISI['asistan_adi'])}, ofisten, {tarih}; {KISI['kullanici_adi'].split()[0]} onayladı)_\n")
+            f.write(f"\n\n{o['metin']}\n\n_({o.get('imza', KISI['asistan_adi'])}, {kaynak}, {tarih}; {onay})_\n")
         beyin("sync")
         return f"{o['yol']} sonuna eklendi"
-    kayit = {"source": o["yol"], "text": f"# {o['baslik']}\n\n{o['metin']}\n\n_({o.get('imza', KISI['asistan_adi'])}, ofisten, {tarih}; {KISI['kullanici_adi'].split()[0]} onayladı)_\n"}
+    kayit = {"source": o["yol"], "text": f"# {o['baslik']}\n\n{o['metin']}\n\n_({o.get('imza', KISI['asistan_adi'])}, {kaynak}, {tarih}; {onay})_\n"}
     if o["tur"] == "not":
         kayit["metadata"] = {"title": o["baslik"], "kind": "note", "visibility": "internal", **({"project": o["proje"]} if o["proje"] else {})}
         komut = "note-create"
@@ -620,6 +627,8 @@ def sor(istek, yaz, tablet=False):
     ajan = istek.get("ajan") if istek.get("ajan") in ROLLER else "ada"
     efor = istek.get("efor") if istek.get("efor") in EFORLAR else "medium"
     oturum = istek.get("oturum") if isinstance(istek.get("oturum"), str) else ""
+    bilgisayar = istek.get("kaynak") == "os" and "os" in EKLER   # ofis bilgisayarının Mesajlar uygulaması (os_veri.py, moduller/bilgisayar.js)
+    dogrudan = bool(bilgisayar and not tablet and not tam_kip and EKLER["os"].dogrudan())   # doğrudan yazma: öneri onay kartı beklemeden kaydedilir
     if not soru:
         return yaz({"tur": "hata", "metin": "Soru boş."})
     exe = claude_yolu()
@@ -629,7 +638,7 @@ def sor(istek, yaz, tablet=False):
                else ["--allowedTools", "Read", "Grep", "Glob", "--disallowedTools", "Bash", "Edit", "Write", "WebFetch", "WebSearch", "NotebookEdit", "Task"])
     arg = [exe, "-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages",
            "--model", model, "--effort", efor, "--add-dir", str(VAULT), *araclar,
-           "--append-system-prompt", sistem_istemi(ajan, tam_kip)]
+           "--append-system-prompt", sistem_istemi(ajan, tam_kip, dogrudan, EKLER["os"].baglam() if bilgisayar else "")]
     kosu = secrets.token_urlsafe(8)
     if tam_kip:
         arg[-2:-2] = ["--settings", str(kritik_ayar())]   # kritik iş kilidi (araclar/kritik_kanca.py): onaysız silme/push/dışarı gönderme yok
@@ -690,9 +699,18 @@ def sor(istek, yaz, tablet=False):
         if sonuc.get("is_error"):
             return yaz({"tur": "hata", "metin": str(tam)[:400], "oturum": sid})
         oneriler = []
-        for blok in ONERI_RE.findall(tam)[:1]:
+        for blok in ONERI_RE.findall(tam)[:3 if dogrudan else 1]:
             o, neden = oneri_dogrula(blok)
-            if o:
+            if o and dogrudan:
+                o["imza"], o["dogrudan"] = ROLLER[ajan][0], True
+                try:
+                    sonuc_ = oneri_uygula(o)
+                    gunluk("yazıldı (bilgisayar): " + sonuc_)
+                    oneriler.append({"kaydedildi": sonuc_, "tur": o["tur"], "yol": o["yol"], "baslik": o["baslik"]})
+                except Exception as e:
+                    gunluk("bilgisayar kaydı: " + traceback.format_exc())
+                    oneriler.append({"gecersiz": "kaydedilemedi: " + str(e)[:200]})
+            elif o:
                 jeton = secrets.token_urlsafe(12)
                 o["imza"] = ROLLER[ajan][0]
                 _bekleyen[jeton] = {"o": o, "t": time.time()}
@@ -1494,7 +1512,7 @@ def main():
     gunluk(f"başladı {url}")
     ZIYARET = ziyaret.Ziyaret(VERI, KOK, ZIYARET_PORT, KESIF_PORT, kisi=kisi_acik, duzen=duzen_oku, gorunum=gorunum_oku,
                               duzen_dogrula=duzen_dogrula, gorunum_dogrula=gorunum_dogrula, gunluk=gunluk)   # ayar açıksa dinleyici burada açılır
-    for ad, modul in (("ses", "ses_motoru"), ("guncelleme", "guncelleme"), ("gercek", "gercek_veri")):   # eklentiler: dosya yoksa ya da kurulamazsa ofis onsuz açılır
+    for ad, modul in (("ses", "ses_motoru"), ("guncelleme", "guncelleme"), ("gercek", "gercek_veri"), ("os", "os_veri")):   # eklentiler: dosya yoksa ya da kurulamazsa ofis onsuz açılır
         try:
             EKLER[ad] = __import__(modul).kur(VERI=VERI, KOK=KOK, VAULT=VAULT, KISI=KISI, gunluk=gunluk)
         except ImportError:
