@@ -13,11 +13,13 @@
 
   const cv = document.getElementById("c"); cv.width = W * S; cv.height = H * S;
   let yo = 1, yaziK = 1; // yazı ölçeği = ekran piksel yoğunluğu × ayarlardaki yazı boyutu çarpanı
+  let kaliteTavan = 1.5;   // tuval çözünürlük çarpanı üst sınırı (Ayarlar > Görüntü kalitesi: yüksek 1.5, dengeli 1, hızlı 0.75)
   function boyutla() {
-    const r = cv.getBoundingClientRect(), d = Math.min(1.5, window.devicePixelRatio || 1);   // yüksek DPI ekranda tuval piksel sayısı sınırlı (akıcılık)
+    const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1, d = Math.min(kaliteTavan, dpr);   // yüksek DPI ekranda tuval piksel sayısı sınırlı (akıcılık)
+    const yIsle = d < dpr ? "pixelated" : ""; if (cv.style.imageRendering !== yIsle) cv.style.imageRendering = yIsle;   // düşük çözünürlükte büyütme keskin piksel olsun
     const w = Math.max(320, Math.round(r.width * d)), h = Math.max(200, Math.round(r.height * d));
     if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
-    yo = Math.max(1, d) * yaziK;
+    yo = Math.max(d < 1 ? 0.75 : 1, d) * yaziK;
   }
   const tamO = () => Math.min(cv.width / W, cv.height / H);
   const g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
@@ -1689,7 +1691,7 @@
     // 4 ms tolerans: 60 Hz ekranda kare zamanlaması 1-2 ms oynayınca kare atlanıp 30 fps'e düşmesin
     if (t < sonrakiKare - 4) { requestAnimationFrame(dongu); return; }
     sonrakiKare = t - sonrakiKare > 100 ? t + 1000 / 60 : sonrakiKare + 1000 / 60;
-    if (++fpsSay >= 60) { const n = performance.now(); document.title = `Ofis · ${KISI.tam} · ${Math.round((fpsSay * 1000) / (n - fpsT0))} fps`; fpsSay = 0; fpsT0 = n; }   // sekme başlığında kare hızı (tanı için)
+    if (++fpsSay >= 60) { const n = performance.now(); window.OFIS_FPS = Math.round((fpsSay * 1000) / (n - fpsT0)); document.title = `Ofis · ${KISI.tam} · ${window.OFIS_FPS} fps`; fpsSay = 0; fpsT0 = n; }   // sekme başlığında kare hızı (tanı için)
     try {
       const gdt = Math.min(0.1, (t - onceki) / 1000), aralik = t - onceki; onceki = t;
       const m0 = performance.now();
@@ -1735,6 +1737,7 @@
       T, W, H, GEN, YUK, cv, g, f, kam, img, PK, ODALAR, odaNo, yurur, koltuklar, zeminler, monitorler, lambalar, KAHVE, YAZICI, tuslar,
       ex, ey, yazi, yuvarlak, yolBul, gonder, gecelik, olcek, MOD, gunSuresi, ofisAyari, ofisKapat, ofisAc, saatAyarla, saatSifirla, get ofisDurum() { return ofisDurum; },
       get gorevler() { return gorevler; }, get DONGU() { return DONGU; }, get yo() { return yo; },
+      get kalite() { return kaliteTavan; }, set kalite(v) { kaliteTavan = Math.max(0.5, Math.min(1.5, +v || 1.5)); },
       get yaziK() { return yaziK; }, set yaziK(v) { yaziK = v; }, get yurumeK() { return yurumeK; }, set yurumeK(v) { yurumeK = v; },
       get kameraK() { return kameraK; }, set kameraK(v) { kameraK = v; },
       // Sütlaç ve nesne etkileşimleri

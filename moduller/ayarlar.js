@@ -5,11 +5,14 @@
 (() => {
   const I = () => window.OFIS_IC;
   const AYAR_ANAHTAR = "ofis-demo-ayar-1";
-  const AYAR_VARSAYILAN = { genel: 100, ambiyans: 100, efekt: 100, yazi: "normal", yurume: 100, kamera: 200, gun: "gercek", acilis: 8, kapanis: 4, mini: true, muzik: true, muzikTarz: "lofi", somine: true, surum: 2 };
+  const AYAR_VARSAYILAN = { genel: 100, ambiyans: 100, efekt: 100, yazi: "normal", kalite: "yuksek", yurume: 100, kamera: 200, gun: "gercek", acilis: 8, kapanis: 4, mini: true, muzik: true, muzikTarz: "lofi", somine: true, surum: 2 };
   const GUNLER = ["gercek", 2, 4, 6];   // gün süresi: gerçek saat ya da hızlı gün (dk)
   const ACILISLAR = [7, 8, 9, 10], KAPANISLAR = [0, 2, 3, 4, 5];   // ofis açılış saati; yedek otomatik kapanış (gece yarısından sonra saat, 0 = kapalı)
   const AYAR_ARALIK = { genel: [0, 150], ambiyans: [0, 150], efekt: [0, 150], yurume: [50, 200], kamera: [120, 320] };
   const YAZI_K = { kucuk: 0.8, normal: 1, buyuk: 1.3 };
+  // Görüntü kalitesi: tuval çözünürlüğü üst sınırı. Otomatik: kare hızı uzun süre 45 fps altında kalırsa bir kademe düşürür (Yüksek 1.5 > Dengeli 1 > Hızlı 0.75)
+  const KALITE = { yuksek: 1.5, dengeli: 1, hizli: 0.75, otomatik: 1.5 }, KADEMELER = [1.5, 1, 0.75];
+  let otoTavan = 1.5, yavasSay = 0, otoZ = 0;
   const ayar = { ...AYAR_VARSAYILAN };
   const el = (id) => document.getElementById(id);
   function ayarYukle() {
@@ -21,13 +24,22 @@
     } catch (e) { /* erişilemezse varsayılanlar */ }
     for (const [k, [a, b]] of Object.entries(AYAR_ARALIK)) { const v = +ayar[k]; ayar[k] = Math.max(a, Math.min(b, Number.isFinite(v) ? v : AYAR_VARSAYILAN[k])); }
     if (!YAZI_K[ayar.yazi]) ayar.yazi = "normal";
+    if (!KALITE[ayar.kalite]) ayar.kalite = "yuksek";
     if (!GUNLER.includes(ayar.gun)) ayar.gun = "gercek";
     if (!ACILISLAR.includes(ayar.acilis)) ayar.acilis = AYAR_VARSAYILAN.acilis;
     if (!KAPANISLAR.includes(ayar.kapanis)) ayar.kapanis = AYAR_VARSAYILAN.kapanis;
   }
   function ayarKaydet() { try { localStorage.setItem(AYAR_ANAHTAR, JSON.stringify(ayar)); } catch (e) { /* kayıt yok */ } }
+  function otoKalite() {   // her 5 sn: son kare hızı 45'in altındaysa 3 ardışık ölçümden sonra bir kademe düşür
+    const ic = I(), fps = window.OFIS_FPS; if (!ic || !fps || document.hidden) return;
+    yavasSay = fps < 45 ? yavasSay + 1 : 0;
+    if (yavasSay < 3) return;
+    yavasSay = 0; const i = KADEMELER.indexOf(otoTavan); if (i < 0 || i >= KADEMELER.length - 1) return;
+    otoTavan = KADEMELER[i + 1]; ic.kalite = otoTavan; ic.gunluk(`Görüntü kalitesi otomatik düşürüldü (kare hızı ~${fps} fps).`, true);
+  }
   function ayarUygula(ilk) {
     const ic = I(), SES = window.SES;
+    if (ayar.kalite === "otomatik") { ic.kalite = otoTavan; if (!otoZ) otoZ = setInterval(otoKalite, 5000); } else { clearInterval(otoZ); otoZ = 0; otoTavan = 1.5; yavasSay = 0; ic.kalite = KALITE[ayar.kalite]; }
     ic.yaziK = YAZI_K[ayar.yazi]; ic.yurumeK = ayar.yurume / 100; ic.kameraK = ayar.kamera / 100; ic.MOD("ayarUygulandi", ayar);
     SES.seviye("genel", ayar.genel / 100); SES.seviye("ambiyans", ayar.ambiyans / 100); SES.seviye("efekt", ayar.efekt / 100);
     ic.ofisAyari(ayar.acilis, ayar.kapanis, ilk);   // açılış değişirse gün yeniden başlar; yalnız kapanış değişirse ofis durumu yeniden hesaplanır
