@@ -59,7 +59,7 @@ SAAT_RE = re.compile(r"\d\d:\d\d")
 BAGLANTI_SURE = 8         # bir bağlantının toplam ömrü (sn): yavaş yavaş okuyan istemci (slowloris) iş parçacığını tutamaz
 IP_BASINA_BAGLANTI = 6    # aynı IP'den eşzamanlı bağlantı
 KESIF_EN_FAZLA = 64
-OZEL_AG = [ipaddress.ip_network(n) for n in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "169.254.0.0/16", "127.0.0.0/8")]
+OZEL_AG = [ipaddress.ip_network(n) for n in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "169.254.0.0/16", "127.0.0.0/8", "100.64.0.0/10")]   # 100.64/10: Tailscale (uzaktaki ofisle ziyaret; eşleşme kodu ve imzalı istekler aynen şart)
 ID_RE = re.compile(r"[0-9a-f]{16}")
 AJAN_RE = re.compile(r"[a-z0-9]{2,20}")
 
@@ -290,7 +290,8 @@ class Ziyaret:
         self.k = threading.RLock()
         self.ayar_dosya, self.esles_dosya = self.veri / "ziyaret.json", self.veri / "eslesmeler.json"
         self.hiz, self.hiz_hassas = Hiz(40, 80), Hiz(1 / 6, 10)   # 4 misafir x 4 Hz
-        self.ozet = self._ozet()
+        self.ozet, self.ozet_n = self._ozet(), self._ozet(True)
+        self.kesif_hata = ""
         self.id, self.acik, self.hata = secrets.token_hex(8), False, ""
         self.eslesmeler = {}
         self.kod = None                  # {kod, bitis}
@@ -310,14 +311,32 @@ class Ziyaret:
             self.baslat()
 
     # ----- dosyalar -----
-    def _ozet(self):
+    def _ozet(self, normal=False):
+        """Harita/atlas/katalog özeti. normal=True: satır sonları LF'ye çevrilir (CRLF/LF farkı iki ofisi "sürüm farklı" yapmasın). Eski eşler ham özeti karşılaştırır; ikisi de gönderilir."""
         h = hashlib.sha1(str(PROTOKOL).encode())
         for ad in ("harita.js", "atlas.js", "katalog.js"):
             try:
-                h.update((self.kok / ad).read_bytes())
+                b = (self.kok / ad).read_bytes()
+                h.update(b.replace(b"\r\n", b"\n") if normal else b)
             except OSError:
                 h.update(b"?")
         return h.hexdigest()[:10]
+
+    def _dosya_ozetleri(self):
+        sonuc = {}
+        for ad in ("harita.js", "atlas.js", "katalog.js"):
+            try:
+                sonuc[ad] = hashlib.sha1((self.kok / ad).read_bytes().replace(b"\r\n", b"\n")).hexdigest()[:8]
+            except OSError:
+                sonuc[ad] = "yok"
+        return sonuc
+
+    def _ozet_uyumlu(self, g):
+        """Karşı tarafın özeti bizimkiyle uyumlu mu: yeni eş normalize özet (`ozet_n`) yollar; eski eş yalnız ham `ozet` (ham ya da normalize ile eşleşirse kabul)."""
+        if not isinstance(g, dict):
+            return False
+        n, o = g.get("ozet_n"), g.get("ozet")
+        return (isinstance(n, str) and n == self.ozet_n) or (isinstance(o, str) and o in (self.ozet, self.ozet_n))
 
     def _yaz(self, hedef, veri):
         """Atomik yazım: aynı klasörde geçici dosya (mkstemp: yalnız sahibine açık), sonra os.replace."""
@@ -408,15 +427,32 @@ class Ziyaret:
 
     # ----- yerel adresler -----
     def yerel_adresler(self):
+        """Bu bilgisayarın özel ağ IPv4 adresleri, EN KULLANIŞLISI BAŞTA: varsayılan yolun adresi (ev Wi-Fi'si), sonra diğer yollar ve Tailscale (100.64/10), en sonda ad çözümlemesinin
+        verdikleri; link-local (169.254) yalnız başka adres yoksa. Yalnız ad çözümlemesi eksik ve yanlış sırada dönebiliyordu (ör. Npcap'in 169.254 adresi önde, Tailscale yok)."""
         if time.time() - getattr(self, "_adres_t", 0) < 30:
             return list(self._adres_onbellek)
-        sonuc = []
+        adaylar = []
+        for hedef in ("8.8.8.8", "192.168.255.255", "10.255.255.255", "172.16.255.255", "100.100.100.100"):
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                try:
+                    s.connect((hedef, 9))   # UDP: paket gitmez, yalnız o yol için seçilen kaynak adres okunur
+                    adaylar.append(s.getsockname()[0])
+                finally:
+                    s.close()
+            except OSError:
+                pass
         try:
-            for ip in socket.gethostbyname_ex(socket.gethostname())[2]:
-                if ozel_adres(ip) and not ip.startswith("127.") and ip not in sonuc:
-                    sonuc.append(ip)
+            adaylar += socket.gethostbyname_ex(socket.gethostname())[2]
         except OSError:
             pass
+        sonuc, yerel_bag = [], []
+        for ip in adaylar:
+            a = ozel_adres(ip)
+            if not a or a.startswith("127.") or a in sonuc or a in yerel_bag:
+                continue
+            (yerel_bag if a.startswith("169.254.") else sonuc).append(a)
+        sonuc = sonuc or yerel_bag
         self._adres_t, self._adres_onbellek = time.time(), sonuc
         return list(sonuc)
 
@@ -448,9 +484,11 @@ class Ziyaret:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
             s.bind(("0.0.0.0", self.kesif_port))
-        except OSError:
+        except OSError as e:
             s.close()
+            self.kesif_hata = f"Keşif portu ({self.kesif_port}, UDP) açılamadı ({e.__class__.__name__}): başka program kullanıyor olabilir."
             return
+        self.kesif_hata = ""
         s.settimeout(1.0)
         try:
             while not dur.is_set():
@@ -544,7 +582,7 @@ class Ziyaret:
 
     # ----- dinleyici uçları (ev sahibi) -----
     def z_kimlik(self):
-        return {"uygulama": "ofis", "protokol": PROTOKOL, "id": self.id, "ad": self._ofis_adi(), "ozet": self.ozet}
+        return {"uygulama": "ofis", "protokol": PROTOKOL, "id": self.id, "ad": self._ofis_adi(), "ozet": self.ozet, "ozet_n": self.ozet_n}
 
     def z_esles(self, g, ip):
         with self.k:
@@ -582,7 +620,8 @@ class Ziyaret:
 
     def z_ping(self, kim, g, ip):
         """İmzalı yoklama: cevabın imzası sırla doğrulandığı için yalnız gerçek eşleşme cevaplayabilir (adres değişimini doğrulamada kullanılır)."""
-        return 200, {"ok": True, "protokol": PROTOKOL, "ozet": self.ozet}
+        return 200, {"ok": True, "protokol": PROTOKOL, "ozet": self.ozet, "ozet_n": self.ozet_n, "dosyalar": self._dosya_ozetleri(), "t": int(time.time() * 1000),
+                     "uygulama_surumu": self._surum_metni()}
 
     def z_kaldir(self, kim, g, ip):
         with self.k:
@@ -597,7 +636,7 @@ class Ziyaret:
         return 200, {"ok": True}
 
     def _surum_uyar(self, g):
-        if g.get("protokol") != PROTOKOL or g.get("ozet") != self.ozet:
+        if g.get("protokol") != PROTOKOL or not self._ozet_uyumlu(g):
             return 409, {"hata": "surum", "protokol": PROTOKOL}
         return None
 
@@ -646,7 +685,7 @@ class Ziyaret:
     def sahne(self):
         k = self.kisi_fn()
         kar = self.an.get("kar") or {}
-        return {"protokol": PROTOKOL, "ozet": self.ozet, "ofis_adi": k["ofis_adi"], "oda_adi": k["oda_adi"], "oyuncu_adi": k["oyuncu_adi"],
+        return {"protokol": PROTOKOL, "ozet": self.ozet, "ozet_n": self.ozet_n, "ofis_adi": k["ofis_adi"], "oda_adi": k["oda_adi"], "oyuncu_adi": k["oyuncu_adi"],
                 "ajanlar": [{"id": i, "ad": v["ad"], "rol": v["rol"], "karakter": kar.get(i)} for i, v in k["ajanlar"].items()],
                 "duzen": self.duzen_fn(), "gorunum": self.gorunum_fn()}
 
@@ -829,6 +868,121 @@ class Ziyaret:
                          "adresler": adresler, "protokol": PROTOKOL, "kod": kod, "kilit": max(0, int(self.kilit_bitis - t)),
                          "eslesmeler": esli, "yakin": yakin, "giden": self._giden_ozet()}
 
+    # --- bağlantı denetimi (Ayarlar > Ziyaret > "Bağlantıyı denetle") ---
+    def _surum_metni(self):
+        try:
+            d = json.loads((self.kok / "surum.json").read_text(encoding="utf-8-sig"))
+            return _metin(d.get("surum"), 20, "?")
+        except (OSError, ValueError, AttributeError):
+            return "?"
+
+    def _agprofili(self):
+        """Windows: etkin ağların kategorisi (Public/Private); okunamazsa boş. Yalnız bilgi amaçlıdır, hiçbir şey değiştirmez."""
+        if os.name != "nt":
+            return []
+        try:
+            import subprocess
+            p = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-Command", "Get-NetConnectionProfile | ForEach-Object { $_.Name + '|' + $_.NetworkCategory }"],
+                               capture_output=True, text=True, timeout=5, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            return [satir.strip().split("|", 1) for satir in p.stdout.splitlines() if "|" in satir]
+        except Exception:
+            return []
+
+    def a_doktor(self, g):
+        """Bağlantı denetimi: ziyaret ayarı, adresler, keşif, ağ profili ve eşleşmiş her ofisle imzalı yoklama (ulaşım, sürüm, saat, ağ). Hiçbir ayarı değiştirmez;
+        her madde {ad, durum: ok|uyari|hata, ayrinti, cozum}."""
+        m = []
+
+        def ekle(ad, durum, ayrinti, cozum=""):
+            m.append({"ad": ad, "durum": durum, "ayrinti": ayrinti, "cozum": cozum})
+        adresler = self.yerel_adresler()
+        with self.k:
+            acik, dinliyor, hata, liste = self.acik, bool(self.sunucu), self.hata, list(self.eslesmeler.values())
+            yakin = list(self.kesif.values())
+            kesif_hata = getattr(self, "kesif_hata", "")
+        if not acik:
+            ekle("Ziyaret", "hata", "\"Ofisimi ziyarete aç\" kapalı: karşı taraf sana bağlanamaz.", "Ayarlar > Ziyaret'te \"Ofisimi ziyarete aç\"ı işaretle.")
+        elif not dinliyor:
+            ekle("Ziyaret", "hata", hata or "Dinleyici açılamadı.", "Başka bir Ofis ya da program 8545 portunu tutuyor olabilir: diğerini kapat, Ofis'i yeniden başlat.")
+        else:
+            ekle("Ziyaret", "ok", f"Dinliyor (port {self.port}).")
+        gercek = [a for a in adresler if not a.startswith("169.254.")]
+        if not gercek:
+            ekle("Ağ adresi", "hata", "Özel ağ adresi bulunamadı (Wi-Fi ya da kablo bağlı değil gibi).", "Wi-Fi'ye ya da Tailscale'e bağlan, sonra yeniden denetle.")
+        else:
+            tail = [a for a in gercek if a.startswith("100.")]
+            ekle("Ağ adresi", "ok", "Karşı tarafın gireceği adres: " + gercek[0] + (f" (Tailscale: {tail[0]})" if tail and tail[0] != gercek[0] else "") + f" · port {self.port}")
+        if kesif_hata:
+            ekle("Otomatik keşif", "uyari", kesif_hata, "Elle IP girerek eşleşebilirsin; keşif için UDP 8546 portunun boş olması gerekir.")
+        else:
+            ekle("Otomatik keşif", "ok" if yakin else "uyari", f"{len(yakin)} ofis görünüyor." if yakin else "Henüz görünen ofis yok.",
+                 "" if yakin else "İki taraf da ziyarete açık ve aynı Wi-Fi'de olmalı; farklı ağdaysanız elle IP girin (uzak için Tailscale).")
+        profil = self._agprofili()
+        genel = [a for a, k in profil if k.strip().lower() == "public"]
+        if genel:
+            ekle("Windows ağ profili", "uyari", "Ağ \"Genel\" işaretli: " + ", ".join(genel) + ". Gelen bağlantılar güvenlik duvarında engellenebilir.",
+                 "Windows Ayarlar > Ağ ve internet > Wi-Fi > ağ özellikleri > Ağ profili: \"Özel\". Güvenlik duvarı sorusunda \"özel ağlar\"a izin ver.")
+        elif profil:
+            ekle("Windows ağ profili", "ok", "Etkin ağlar özel ya da alan ağı.")
+        sonuclar = {}
+
+        def yokla(e):
+            r = {"kod": None, "d": {}, "hata": ""}
+            try:
+                r["kod"], r["d"] = self._cagir(e, "/z/ping", {}, 2.5)
+            except ValueError as x:
+                r["hata"] = "imza"
+            except OSError:
+                r["hata"] = "ulasilamadi"
+            sonuclar[e["id"]] = r
+        isler = [threading.Thread(target=yokla, args=(e,), daemon=True) for e in liste]
+        for i in isler:
+            i.start()
+        for i in isler:
+            i.join(3.5)
+        benim = self._surum_metni()
+        for e in liste:
+            ad = "Ofis: " + e["ad"]
+            r = sonuclar.get(e["id"]) or {"kod": None, "d": {}, "hata": "ulasilamadi"}
+            adres = e["adres"]
+            yerel_alt = {".".join(a.split(".")[:3]) for a in gercek}
+            ayni_ag = ".".join(adres.split(".")[:3]) in yerel_alt or adres.startswith("100.") or adres.startswith("127.")
+            if r["hata"] == "imza" or r["kod"] == 403:
+                ekle(ad, "hata", f"{adres} cevap verdi ama imza uyuşmadı: eşleşme tek taraflı silinmiş ya da iki bilgisayarın saati 1 dakikadan fazla farklı.",
+                     "İki bilgisayarın saatini otomatik eşitle (Windows: Saat > Şimdi eşitle). Düzelmezse iki tarafta da eşleşmeyi kaldırıp yeniden eşleş.")
+                continue
+            if r["kod"] is None:
+                neden = "" if ayni_ag else f" Farklı ağdasınız gibi ({adres}): aynı Wi-Fi'ye geçin ya da iki tarafa da Tailscale kurup 100.x adresini kullanın."
+                ekle(ad, "hata", f"{adres}:{e['port']} adresine ulaşılamadı.{neden}",
+                     "Karşı taraf Ofis'i açık ve \"ziyarete aç\" işaretli mi? IP değişmiş olabilir: aynı ağdayken birkaç dakika bekle (adres kendiliğinden güncellenir) ya da yeniden eşleş.")
+                continue
+            d = r["d"] if isinstance(r["d"], dict) else {}
+            sorunlar, cozum = [], ""
+            if d.get("protokol") != PROTOKOL:
+                sorunlar.append(f"ziyaret protokolü farklı (sende {PROTOKOL}, onda {d.get('protokol')})")
+                cozum = "İki taraf da aynı Ofis sürümünü kursun."
+            elif not self._ozet_uyumlu(d):
+                fark = [ad_ for ad_, h in (d.get("dosyalar") or {}).items() if isinstance(h, str) and h != self._dosya_ozetleri().get(ad_)] if isinstance(d.get("dosyalar"), dict) else []
+                sorunlar.append("harita/atlas/katalog dosyaları farklı" + (": " + ", ".join(fark[:3]) if fark else ""))
+                cozum = "İki taraf da aynı sürümü kurup Kur.bat'ı çalıştırsın (görseller yeniden üretilir); sürüm eşitse atlas.js/katalog.js bozuk ya da farklı LimeZu paketinden üretilmiş olabilir."
+            t = d.get("t")
+            if isinstance(t, int) and abs(int(time.time() * 1000) - t) > 30000:
+                sorunlar.append(f"saat farkı {abs(int(time.time() * 1000) - t) // 1000} sn")
+                cozum = (cozum + " " if cozum else "") + "Saatler 1 dakikadan fazla ayrılırsa bağlantı reddedilir: saati otomatik eşitle."
+            ben_s, o_s = benim, _metin(d.get("uygulama_surumu"), 20, "")
+            if o_s and ben_s != "?" and o_s != ben_s:
+                sorunlar.append(f"Ofis sürümü farklı (sende {ben_s}, onda {o_s})")
+                cozum = (cozum + " " if cozum else "") + "Sürümler eşit olmalı."
+            if sorunlar:
+                ekle(ad, "uyari", f"{adres} çevrimiçi, ama: " + "; ".join(sorunlar) + ".", cozum)
+            else:
+                ekle(ad, "ok", f"{adres} çevrimiçi, sürüm ve saat uyumlu" + (f" (Ofis {o_s})" if o_s else "") + ".")
+        if not liste:
+            ekle("Eşleşme", "uyari", "Henüz eşleşmiş ofis yok.", "Bir tarafta \"Eşleşme kodu üret\", diğer tarafta IP + kodla \"Eşleş\".")
+        durumlar = [x["durum"] for x in m]
+        ozet = "Her şey yolunda görünüyor." if all(d == "ok" for d in durumlar) else ("Sorun var: aşağıdaki çözümleri uygula." if "hata" in durumlar else "Dikkat edilecekler var.")
+        return 200, {"maddeler": m, "ozet": ozet, "zaman": time.strftime("%H:%M:%S")}
+
     def a_ayar(self, g):
         self.ayarla(g.get("acik") is True)
         return self.a_durum({})
@@ -852,7 +1006,7 @@ class Ziyaret:
             try:
                 kod, d = self._cagir(e, "/z/ping", {}, 2.0)   # imzalı: kimliği ve sırrı da doğrular
                 e["cevrimici"] = kod == 200
-                e["surum_uyumlu"] = kod == 200 and d.get("protokol") == PROTOKOL and d.get("ozet") == self.ozet
+                e["surum_uyumlu"] = kod == 200 and d.get("protokol") == PROTOKOL and self._ozet_uyumlu(d)
             except (OSError, ValueError):
                 e["cevrimici"] = False
         isler = [threading.Thread(target=yokla, args=(e,), daemon=True) for e in liste]
@@ -998,7 +1152,7 @@ class Ziyaret:
                 return 409, {"durum": "hata", "mesaj": "Zaten bir ziyaret sürüyor."}
             self.giden = None
         govde = {"ad": _metin((self.kisi_fn() or {}).get("oyuncu_adi"), 40, "Misafir"), "gorunum": self.gorunum_dogrula(g.get("gorunum")),
-                 "protokol": PROTOKOL, "ozet": self.ozet}
+                 "protokol": PROTOKOL, "ozet": self.ozet, "ozet_n": self.ozet_n}
         try:
             kod, d = self._cagir(e, "/z/istek", govde)
         except (OSError, ValueError):
@@ -1069,7 +1223,7 @@ class Ziyaret:
 
     def _sahne_temizle(self, s):
         """Ev sahibinden gelen sahne (güvenilmez veri): biçim ve sürüm denetimi, metinler kısaltılır, düzen/görünüm doğrulanır."""
-        if not isinstance(s, dict) or s.get("protokol") != PROTOKOL or s.get("ozet") != self.ozet:
+        if not isinstance(s, dict) or s.get("protokol") != PROTOKOL or not self._ozet_uyumlu(s):
             return None
         ajanlar = []
         for a in (s.get("ajanlar") if isinstance(s.get("ajanlar"), list) else [])[:32]:

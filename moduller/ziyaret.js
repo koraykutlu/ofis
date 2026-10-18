@@ -424,8 +424,9 @@
       <div class="not" id="z_bilgi"></div>
       <div class="zsatir"><button id="z_kod">Eşleşme kodu üret</button><b id="z_kodGoster" class="zkod"></b></div>
       <div class="not">Yakındaki ofisler</div><div id="z_yakin" class="zliste"></div>
-      <div class="zsatir"><input id="z_ip" placeholder="IP (192.168.x.x)" size="14" autocomplete="off"><input id="z_port" placeholder="8545" size="5" autocomplete="off"><input id="z_kodGir" placeholder="6 haneli kod" size="9" maxlength="6" inputmode="numeric" autocomplete="off"><button id="z_esles">Eşleş</button></div>
+      <div class="zsatir"><input id="z_ip" placeholder="IP (192.168.x.x / 100.x.x.x)" size="14" autocomplete="off"><input id="z_port" placeholder="8545" size="5" autocomplete="off"><input id="z_kodGir" placeholder="6 haneli kod" size="9" maxlength="6" inputmode="numeric" autocomplete="off"><button id="z_esles">Eşleş</button></div>
       <div class="not">Eşleşmeler</div><div id="z_liste" class="zliste"></div>
+      <div class="zsatir"><button id="z_doktor">Bağlantıyı denetle</button></div><div id="z_doktorSonuc" class="zliste" aria-live="polite"></div>
       <div class="not" id="z_mesaj" aria-live="polite"></div>`;
     el("z_acik").onchange = async () => { zMesaj(""); durum = await api("ayar", { acik: el("z_acik").checked }); durumUygula(); };
     el("z_kod").onclick = async () => { const d = await api("kod", {}); if (d._kod === 200) { durum = d; durumUygula(); } else zMesaj(d.hata || "Kod üretilemedi."); };
@@ -434,6 +435,20 @@
       zMesaj("Eşleşiliyor…");
       const d = await api("esles", { adres: ip, port, kod });
       if (d._kod === 200) { durum = d; el("z_kodGir").value = ""; zMesaj("Eşleşildi."); durumUygula(); } else zMesaj(d.hata || "Eşleşilemedi.");
+    };
+    el("z_doktor").onclick = async () => {
+      const kutu = el("z_doktorSonuc"), dugme = el("z_doktor"); dugme.disabled = true; kutu.textContent = "Denetleniyor…";
+      try {
+        const d = await api("doktor", {}); kutu.replaceChildren();
+        if (d._kod !== 200) { kutu.textContent = d.hata || "Denetlenemedi."; return; }
+        const b = document.createElement("div"); b.className = "not"; b.textContent = `${d.ozet} (${d.zaman})`; kutu.append(b);
+        for (const m of d.maddeler) {
+          const s = document.createElement("div"), simge = m.durum === "ok" ? "✅" : m.durum === "uyari" ? "⚠️" : "❌";
+          s.textContent = `${simge} ${m.ad}: ${m.ayrinti}`;
+          if (m.cozum) { const c = document.createElement("div"); c.className = "soluk"; c.textContent = "→ " + m.cozum; s.append(c); }
+          kutu.append(s);
+        }
+      } catch (e) { kutu.textContent = "Denetlenemedi."; } finally { dugme.disabled = false; }
     };
     const gozle = new MutationObserver(() => { const acikMi = !el("ayarPanel").hidden; if (acikMi && !ayarZ) { ayarYenile(); ayarZ = setInterval(ayarYenile, 2000); } else if (!acikMi && ayarZ) { clearInterval(ayarZ); ayarZ = 0; } });
     gozle.observe(el("ayarPanel"), { attributes: true, attributeFilter: ["hidden"] });

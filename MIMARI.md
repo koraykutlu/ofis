@@ -340,6 +340,12 @@ bayat anlık görüntü, kalıcılık, bozuk dosya) ve iki pencereli başsız Ed
 - **Test kancaları:** `ziyaretSohbet()`, `ziyaretYaz(metin)`, `ziyaretTepki(1-4)`. Doğrulama (portlar 8611/8612, ziyaret 8615/8616, keşif 8617): `ofis.pyw` iki örnek + doğrudan imzalı istekler (78 sunucu/birim kontrolü), iki başsız Edge ile 26 uçtan uca kontrol
   (gerçek tuşlar, balon, kart, HTML, hız sınırı, ayrılma, konsol temiz). Çekirdekte değişiklik yok; `ofis.pyw`'de tek satır: `Sunucu.request_queue_size = 128` (sayfa açılışında Windows'ta ERR_CONNECTION_REFUSED).
 
+### Bağlantı denetimi ve dayanıklılık (ziyaret.py > `a_doktor`; Ayarlar > Ziyaret > "Bağlantıyı denetle")
+- `a_doktor` hiçbir ayarı değiştirmez; maddeler `{ad, durum: ok|uyari|hata, ayrinti, cozum}`: ziyaret açık/dinliyor, ağ adresi, UDP keşif, Windows ağ profili (Public uyarısı), eşleşmiş her ofisle imzalı `/z/ping` (ulaşım, imza/saat, protokol, harita-atlas-katalog dosya farkı, saat farkı, Ofis sürümü, farklı ağ).
+- `yerel_adresler`: varsayılan yolun adresi başta (UDP `connect` ile kaynak adres seçilir), Tailscale (100.64/10) dahil; 169.254 yalnız başka adres yoksa. Ad çözümlemesi tek başına yanlış sırada ve eksik dönüyordu.
+- `OZEL_AG`'a 100.64.0.0/10 (Tailscale) eklendi: uzaktaki ofisle elle IP girerek eşleşme/ziyaret; kod, imza ve onay şartları aynen sürer.
+- Sürüm özeti: `ozet` (ham, eski eşler) yanında `ozet_n` (satır sonları LF'ye çevrilmiş) gönderilir; `_ozet_uyumlu` ikisini de kabul eder, CRLF/LF farkı "sürüm farklı" yapmaz. `z_ping`/`z_kimlik` ek alanlar (`dosyalar`, `t`, `uygulama_surumu`) eski eşlerce yok sayılır.
+
 ## 17 Ekim denetim düzeltmeleri (4. aşama sonrası)
 - **Sürüm devri / `/api/kapat`:** artık yalnız `POST`, Host denetimli, `Origin` başlığı varsa 403 ve özel başlık `X-Ofis-Kapat: 1` ister (web sayfası sunucuyu kapatamaz). Yeni başlatıcı eskisini önce POST ile
   kapatır; eski sürümler (GET bilen) 403 verirse tek seferlik GET'e geri düşer. İkisi de sınandı: eski yedek kodu açıkken yeni başlatıcı devraldı; yeni→yeni devir POST ile.
