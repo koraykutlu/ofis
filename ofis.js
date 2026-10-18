@@ -1,5 +1,6 @@
 // Yönetim Ofisi: LimeZu (ücretsiz) + kodla çizilmiş ofis eşyaları, A* yol bulma, katmanlı çizim, sentez sesler.
 (() => {
+  const YT = () => window.OFIS_YAZI_TIPI || "'Pixelify Sans', system-ui, sans-serif";   // seçili yazı tipi (Ayarlar > Yazı tipi; moduller/ayarlar.js)
   const T = 16, GEN = 48, YUK = 32, W = GEN * T, H = YUK * T, S = 2;
   // Gün süresi (sn) ve kapsadığı dakika. Hızlı gün (test, video): 120 / 240 / 360 sn = 08:00 → 02:00 (1080 dk), sonunda otomatik kapanır.
   // Gerçek saat (varsayılan): 86400 sn = açılış saati → ertesi açılış (1440 dk); zaman bilgisayarın saatini izler. Gün ACILIS'ta (dk, 08:00 = 480) başlar.
@@ -1442,7 +1443,7 @@
   const ex = (px) => (px - kam.x) * kam.o, ey = (py) => (py - kam.y) * kam.o;
 
   function yazi(metin, x, y, boyut, renk, ops = {}) {
-    g.font = `${ops.kalin === false ? "" : "bold "}${boyut}px ${ops.yazitipi || "'Pixelify Sans', system-ui, sans-serif"}`;
+    g.font = `${ops.kalin === false ? "" : "bold "}${boyut}px ${ops.yazitipi || YT()}`;
     g.textBaseline = "top"; g.textAlign = ops.hiza || "left";
     if (ops.golge) { g.fillStyle = ops.golge; g.fillText(metin, x + yo, y + yo); }
     g.fillStyle = renk; g.fillText(metin, x, y); g.textAlign = "left";
@@ -1458,7 +1459,7 @@
       if (e.tur === "gundem") {
         yazi(TV.gundem_ust || "CANLI", X + 68 * k, Y + 8 * k, 12 * k, "#ffffff"); yazi(TV.gundem_alt || "GÜNDEM", X + 68 * k, Y + 22 * k, 11 * k, "#79c3f0", { kalin: false });
         const m = zaman < efekt.sonDakika ? `SON DAKİKA · ${KISI.tam} habersiz ${TV.yer_ek || "stüdyoya"} daldı · Sütlaç olay yerinde   •   ` : V.manset.join("   •   ") + "   •   ";
-        g.font = `bold ${11 * k}px 'Pixelify Sans', system-ui, sans-serif`; const gw = g.measureText(m).width;
+        g.font = `bold ${11 * k}px ${YT()}`; const gw = g.measureText(m).width;
         yazi(m + m, X + 6 * k - ((zaman * 40 * k) % gw), Y + Hd - 20 * k, 11 * k, "#ffffff");
       } else if (e.tur === "brifing" && toplanti && !uzak) {
         const T_ = toplanti, en = Wd - 16 * k, rapor = T_.durum === "rapor" && T_.aktif ? `${T_.aktif.ad}: ${T_.m.raporlar[T_.aktif.id] || ""}` : "";
@@ -1504,7 +1505,7 @@
     MOD("ustKatmanSon", hy);   // moduller/mini-harita.js (HUD'un üstü)
   }
   function konusIpucu(wx, wy, etiket) {
-    const u = yo; g.font = `bold ${14 * u}px 'Pixelify Sans', system-ui, sans-serif`;
+    const u = yo; g.font = `bold ${14 * u}px ${YT()}`;
     const w = g.measureText(etiket).width + 44 * u; let x = ex(wx), y = ey(wy) - 36 * u;
     // Bir balonla çakışırsa ipucu oyuncunun ayaklarının altına iner
     if (balonAlanlari.some((r) => x - w / 2 < r.x + r.w && x + w / 2 > r.x && y < r.y + r.h + 10 * u && y + 28 * u > r.y)) { x = ex(oyuncu.x * T + 8); y = ey(oyuncu.y * T + T) + 26 * u; }
@@ -1515,15 +1516,15 @@
   function isimEtiketi(a) {
     if (a.disarda) return;
     const u = yo, x = ex(a.x * T + 8), y = ey(a.y * T + T) + 2 * u;
-    g.font = `bold ${13 * u}px 'Pixelify Sans', system-ui, sans-serif`; const w = g.measureText(a.ad).width + 14 * u;
+    g.font = `bold ${13 * u}px ${YT()}`; const w = g.measureText(a.ad).width + 14 * u;
     g.fillStyle = a.oyuncu ? "rgba(242,207,74,.97)" : a.kedi ? "rgba(255,240,245,.97)" : "rgba(20,22,28,.9)"; yuvarlak(x - w / 2, y, w, 20 * u, 5 * u); g.fill();
     yazi(a.ad, x, y + 3 * u, 13 * u, a.oyuncu || a.kedi ? "#1d2029" : "#f3efe4", { hiza: "center" });
   }
   function balonCiz(a) {
     if (!a.balon || zaman > a.balonSon || a.disarda) return;
-    const u = yo * Math.max(0.72, Math.min(1, cv.width / (900 * yo))), gov = `${15 * u}px 'Pixelify Sans', system-ui, sans-serif`;   // dar tuvalde küçülür
+    const u = yo * Math.max(0.72, Math.min(1, cv.width / (900 * yo))), gov = `${15 * u}px ${YT()}`;   // dar tuvalde küçülür
     g.font = gov; const satirlar = sar(a.balon, Math.min(230 * u, cv.width * 0.55));
-    g.font = `bold ${13 * u}px 'Pixelify Sans', system-ui, sans-serif`; const bw = g.measureText(a.ad).width;
+    g.font = `bold ${13 * u}px ${YT()}`; const bw = g.measureText(a.ad).width;
     g.font = gov;
     const sh = 20 * u, gw = Math.max(bw, ...satirlar.map((s) => g.measureText(s).width)) + 22 * u, gh = satirlar.length * sh + 30 * u;
     const ax = ex(a.x * T + 8), uc = ey(a.y * T - T + (a.kedi ? 12 : 4));
@@ -1544,7 +1545,7 @@
   }
   // Metni verilen genişliğe sığacak boyutta yazar (perde gibi dar alanlar için)
   function yaziSigdir(metin, x, y, boyut, renk, en, ops) {
-    g.font = `${ops && ops.kalin === false ? "" : "bold "}${boyut}px 'Pixelify Sans', system-ui, sans-serif`;
+    g.font = `${ops && ops.kalin === false ? "" : "bold "}${boyut}px ${YT()}`;
     const w = g.measureText(metin).width; yazi(metin, x, y, w > en ? (boyut * en) / w : boyut, renk, ops);
   }
   function sar(metin, en) {

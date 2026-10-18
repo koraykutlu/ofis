@@ -5,11 +5,14 @@
 (() => {
   const I = () => window.OFIS_IC;
   const AYAR_ANAHTAR = "ofis-demo-ayar-1";
-  const AYAR_VARSAYILAN = { genel: 100, ambiyans: 100, efekt: 100, yazi: "normal", yurume: 100, kamera: 200, gun: "gercek", acilis: 8, kapanis: 4, mini: true, muzik: true, muzikTarz: "lofi", somine: true, surum: 2 };
+  const AYAR_VARSAYILAN = { genel: 100, ambiyans: 100, efekt: 100, yazi: "normal", font: "piksel", yurume: 100, kamera: 200, gun: "gercek", acilis: 8, kapanis: 4, mini: true, muzik: true, muzikTarz: "lofi", somine: true, surum: 2 };
   const GUNLER = ["gercek", 2, 4, 6];   // gün süresi: gerçek saat ya da hızlı gün (dk)
   const ACILISLAR = [7, 8, 9, 10], KAPANISLAR = [0, 2, 3, 4, 5];   // ofis açılış saati; yedek otomatik kapanış (gece yarısından sonra saat, 0 = kapalı)
   const AYAR_ARALIK = { genel: [0, 150], ambiyans: [0, 150], efekt: [0, 150], yurume: [50, 200], kamera: [120, 320] };
   const YAZI_K = { kucuk: 0.8, normal: 1, buyuk: 1.3 };
+  // Yazı tipi: varsayılan Pixelify Sans (Stardew tarzı, OFL); diğerleri sistem yazı tipleri (indirme gerektirmez)
+  const FONTLAR = { piksel: "'Pixelify Sans', system-ui, sans-serif", sistem: "'Segoe UI', system-ui, sans-serif", serif: "Georgia, 'Times New Roman', serif", mono: "Consolas, 'Courier New', monospace" };
+  let sonFont = "";
   const ayar = { ...AYAR_VARSAYILAN };
   const el = (id) => document.getElementById(id);
   function ayarYukle() {
@@ -21,6 +24,7 @@
     } catch (e) { /* erişilemezse varsayılanlar */ }
     for (const [k, [a, b]] of Object.entries(AYAR_ARALIK)) { const v = +ayar[k]; ayar[k] = Math.max(a, Math.min(b, Number.isFinite(v) ? v : AYAR_VARSAYILAN[k])); }
     if (!YAZI_K[ayar.yazi]) ayar.yazi = "normal";
+    if (!FONTLAR[ayar.font]) ayar.font = "piksel";
     if (!GUNLER.includes(ayar.gun)) ayar.gun = "gercek";
     if (!ACILISLAR.includes(ayar.acilis)) ayar.acilis = AYAR_VARSAYILAN.acilis;
     if (!KAPANISLAR.includes(ayar.kapanis)) ayar.kapanis = AYAR_VARSAYILAN.kapanis;
@@ -28,6 +32,9 @@
   function ayarKaydet() { try { localStorage.setItem(AYAR_ANAHTAR, JSON.stringify(ayar)); } catch (e) { /* kayıt yok */ } }
   function ayarUygula(ilk) {
     const ic = I(), SES = window.SES;
+    document.documentElement.style.setProperty("--yt", FONTLAR[ayar.font]); window.OFIS_YAZI_TIPI = FONTLAR[ayar.font];
+    if (sonFont && sonFont !== ayar.font) ic.yerlesimYenile();   // oda tabelaları gibi önceden çizilmiş yazılar yeni yazı tipiyle yenilenir
+    sonFont = ayar.font;
     ic.yaziK = YAZI_K[ayar.yazi]; ic.yurumeK = ayar.yurume / 100; ic.kameraK = ayar.kamera / 100; ic.MOD("ayarUygulandi", ayar);
     SES.seviye("genel", ayar.genel / 100); SES.seviye("ambiyans", ayar.ambiyans / 100); SES.seviye("efekt", ayar.efekt / 100);
     ic.ofisAyari(ayar.acilis, ayar.kapanis, ilk);   // açılış değişirse gün yeniden başlar; yalnız kapanış değişirse ofis durumu yeniden hesaplanır
