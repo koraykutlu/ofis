@@ -15,13 +15,13 @@
 <link rel="icon" href="varliklar/ofis.png">
 <title>Ofis · {tam}</title>
 <style>
-  :root { --zemin:#14161c; --panel:#1d2029; --cizgi:#2c3040; --yazi:#e8e6df; --soluk:#9a9caa; --vurgu:#f2c14e; --iyi:#6cc28a; --kotu:#e36b5d;
+  :root { --yt:'Pixelify Sans', system-ui, sans-serif; --zemin:#14161c; --panel:#1d2029; --cizgi:#2c3040; --yazi:#e8e6df; --soluk:#9a9caa; --vurgu:#f2c14e; --iyi:#6cc28a; --kotu:#e36b5d;
     --kenar:#444a5e; --dugme:#2c3040; --kutu:#3f4258; --kutuKenar:#5b6178; }   /* kişi.json tema.renkler bunları ezebilir (kisi.js) */
   @font-face { font-family:"Pixelify Sans"; src:url(yazi/PixelifySans.ttf) format("truetype"); font-weight:400 700; font-display:swap; }   /* SIL OFL 1.1: yazi/OFL.txt; dosya yoksa yedek yazı tipi (sistem) kullanılır */
   * { box-sizing: border-box; }
   html, body { height:100%; }
   @supports (height:100dvh) { html, body { height:100dvh; } }   /* iPad Safari araç çubuğu: görünen alana tam otur, altta boşluk kalmasın */
-  body { margin:0; background:var(--zemin); color:var(--yazi); font:15px/1.5 'Pixelify Sans', system-ui, sans-serif; display:flex; flex-direction:column; overflow:hidden; }
+  body { margin:0; background:var(--zemin); color:var(--yazi); font:15px/1.5 var(--yt); display:flex; flex-direction:column; overflow:hidden; }
   header { flex:none; display:flex; align-items:center; gap:10px; padding:8px 14px; border-bottom:1px solid var(--cizgi); flex-wrap:wrap; }
   header h1 { font-size:17px; margin:0; letter-spacing:.2px; }
   .etiket { font-size:12px; color:#1d2029; background:var(--vurgu); padding:2px 8px; border-radius:99px; font-weight:600; }
@@ -320,7 +320,7 @@
   #panoListe { list-style:none; margin:0; padding:0; }
   #panoListe li { display:flex; gap:9px; align-items:flex-start; padding:5px 2px; border-bottom:1px dashed var(--cizgi); }
   #panoListe li:last-child { border-bottom:0; } #panoListe li.bos { color:var(--soluk); font-style:italic; }
-  #panoListe .kutu { flex:none; width:20px; height:20px; border:2px solid var(--kutuKenar); border-radius:5px; background:transparent; color:#14161c; font:700 13px 'Pixelify Sans', system-ui, sans-serif; line-height:1; padding:0; cursor:pointer; display:grid; place-items:center; }
+  #panoListe .kutu { flex:none; width:20px; height:20px; border:2px solid var(--kutuKenar); border-radius:5px; background:transparent; color:#14161c; font:700 13px var(--yt); line-height:1; padding:0; cursor:pointer; display:grid; place-items:center; }
   #panoListe li.bitti .kutu { background:var(--iyi); border-color:var(--iyi); } #panoListe li.bitti .ad { text-decoration:line-through; color:var(--soluk); }
   #panoListe .ad { flex:1; min-width:0; overflow-wrap:anywhere; cursor:pointer; } #panoListe .sil { flex:none; border:0; background:none; color:var(--soluk); cursor:pointer; font-size:13px; padding:0 2px; }
   #panoForm { display:flex; gap:6px; margin-top:8px; } #panoGiris { flex:1; min-width:0; font:inherit; font-size:13px; padding:5px 8px; border-radius:8px; border:1px solid var(--kenar); background:var(--dugme); color:var(--yazi); }
@@ -335,7 +335,7 @@
   #canliListe li { display:flex; gap:9px; align-items:flex-start; padding:6px 2px; border-bottom:1px dashed var(--cizgi); cursor:pointer; }
   #canliListe li:last-child { border-bottom:0; }
   #canliListe li.bos { cursor:default; color:var(--soluk); font-style:italic; }
-  #canliListe .kutu { flex:none; width:22px; height:22px; margin-top:1px; border:2px solid var(--kutuKenar); border-radius:5px; background:transparent; color:#14161c; font:700 14px 'Pixelify Sans', system-ui, sans-serif; line-height:1; padding:0; cursor:pointer; display:grid; place-items:center; }
+  #canliListe .kutu { flex:none; width:22px; height:22px; margin-top:1px; border:2px solid var(--kutuKenar); border-radius:5px; background:transparent; color:#14161c; font:700 14px var(--yt); line-height:1; padding:0; cursor:pointer; display:grid; place-items:center; }
   #canliListe li.bitti .kutu { background:var(--iyi); border-color:var(--iyi); }
   #canliListe li.bitti .ad { text-decoration:line-through; color:var(--soluk); }
   #canliListe .gv { flex:1; min-width:0; } #canliListe .ad { display:block; } #canliListe .not { display:block; color:var(--soluk); font-size:11.5px; line-height:1.3; }
@@ -364,7 +364,7 @@
   #dkPad .sol { left:10px; top:50%; transform:translateY(-50%); } #dkPad .sag { right:10px; top:50%; transform:translateY(-50%); }
   #dkTopuz { position:absolute; left:50%; top:50%; width:52px; height:52px; margin:-26px 0 0 -26px; border-radius:50%; background:rgba(242,193,78,.8); border:3px solid var(--yazi); pointer-events:none; transition:transform .05s; }
   #dkDugme { position:absolute; right:max(14px, env(safe-area-inset-right)); bottom:18px; display:grid; grid-template-columns:repeat(2, 56px); gap:10px; justify-items:end; align-items:end; }
-  #dkDugme button { width:56px; height:56px; border-radius:50%; border:3px solid rgba(242,193,78,.7); background:rgba(29,32,41,.7); color:var(--yazi); font:700 20px 'Pixelify Sans', system-ui, sans-serif; touch-action:none; padding:0; cursor:pointer; }
+  #dkDugme button { width:56px; height:56px; border-radius:50%; border:3px solid rgba(242,193,78,.7); background:rgba(29,32,41,.7); color:var(--yazi); font:700 20px var(--yt); touch-action:none; padding:0; cursor:pointer; }
   #dkDugme button.basili { background:rgba(242,193,78,.85); color:#3a2430; }
   #dkDugme #dkE { grid-column:1 / 3; width:84px; height:84px; font-size:30px; background:rgba(242,193,78,.55); }
   @media (max-height:520px) { #dkPad { width:112px; height:112px; } #dkDugme #dkE { width:68px; height:68px; } }
@@ -396,6 +396,7 @@
   <div class="s"><span>Müzik tarzı</span><div class="seg"><button data-ayar="muzikTarz" data-v="lofi">Lofi</button><button data-ayar="muzikTarz" data-v="caz">Caz</button><button data-ayar="muzikTarz" data-v="piyano">Piyano</button></div></div>
   <label class="s"><span>Şömine sesi</span><input type="checkbox" id="a_somine"></label>
   <div class="s"><span>Görüntü kalitesi</span><div class="seg"><button data-ayar="kalite" data-v="yuksek">Yüksek</button><button data-ayar="kalite" data-v="dengeli">Dengeli</button><button data-ayar="kalite" data-v="hizli">Hızlı</button><button data-ayar="kalite" data-v="otomatik">Otomatik</button></div></div>
+  <div class="s"><span>Yazı tipi</span><div class="seg"><button data-ayar="font" data-v="piksel">Piksel</button><button data-ayar="font" data-v="sistem">Sistem</button><button data-ayar="font" data-v="serif">Serif</button><button data-ayar="font" data-v="mono">Mono</button></div></div>
   <div class="s"><span>Yazı boyutu</span><div class="seg"><button data-ayar="yazi" data-v="kucuk">Küçük</button><button data-ayar="yazi" data-v="normal">Normal</button><button data-ayar="yazi" data-v="buyuk">Büyük</button></div></div>
   <label class="s"><span>Yürüme hızı</span><input type="range" id="a_yurume" min="50" max="200" step="10"><output id="o_yurume"></output></label>
   <label class="s"><span>Kamera yakınlığı</span><input type="range" id="a_kamera" min="120" max="320" step="10"><output id="o_kamera"></output></label>
@@ -531,5 +532,6 @@
 <script src="moduller/etkilesim.js?s=3"></script>
 <script src="moduller/dokunmatik.js?s=1"></script>
 <script src="moduller/bilgisayar.js?s=2"></script>
+<script src="moduller/claude-kodu.js?s=1"></script>
 </body>
 </html>

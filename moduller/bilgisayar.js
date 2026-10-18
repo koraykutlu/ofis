@@ -20,10 +20,10 @@
   const UYG = [
     { id: "hedefler", ad: "Hedefler", ikon: "🎯" }, { id: "isler", ad: "İşler", ikon: "✅" }, { id: "fikirler", ad: "Fikirler", ikon: "💡" },
     { id: "yapilanlar", ad: "Yaptıklarım", ikon: "🏆" }, { id: "posta", ad: "Posta", ikon: "✉️" }, { id: "mesajlar", ad: "Mesajlar", ikon: "💬" },
-    { id: "projeler", ad: "Projeler", ikon: "📁" }, { id: "terminal", ad: "Terminal", ikon: "🖥️" }, { id: "sutlac", ad: "Sütlaç Koşusu", ikon: "🐱" },
+    { id: "projeler", ad: "Projeler", ikon: "📁" }, { id: "claudekodu", ad: "Claude Code", ikon: "✳️" }, { id: "terminal", ad: "Terminal", ikon: "🖥️" }, { id: "sutlac", ad: "Sütlaç Koşusu", ikon: "🐱" },
     { id: "odak", ad: "Odak", ikon: "⏱️" }, { id: "ayarlar", ad: "Ayarlar", ikon: "⚙️" }, { id: "gizli", ad: "çok gizli", ikon: "📁", gizli: true },
   ];
-  const CANLI = new Set(["mesajlar", "terminal", "sutlac"]);   // veri yenilenince yeniden çizilmez (yazılan metin / oyun durumu kaybolmasın)
+  const CANLI = new Set(["mesajlar", "terminal", "sutlac", "claudekodu"]);   // veri yenilenince yeniden çizilmez (yazılan metin / oyun durumu kaybolmasın)
   const UNVAN = ["Stajyer", "Muhabir", "Kıdemli muhabir", "Editör", "Yazı işleri müdürü", "Genel yayın yönetmeni", "Efsane"];
   const DURUM_AD = { active: "sürüyor", doing: "sürüyor", inbox: "gelen", todo: "yapılacak", waiting: "bekliyor", blocked: "takıldı", aktif: "aktif", taslak: "taslak" };
 
@@ -94,7 +94,7 @@
 
   // ---------- görünüm ----------
   const CSS = `
-  #bos { position:absolute; inset:0; z-index:30; display:flex; align-items:center; justify-content:center; background:rgba(6,7,10,.62); backdrop-filter:blur(1.5px); }
+  #bos { position:absolute; inset:5% 7% 10%; z-index:30; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:12px; border:2px solid rgba(255,255,255,.12); background:rgba(6,7,10,.62); box-shadow:0 14px 44px rgba(0,0,0,.65); }   /* ekranı kaplamaz: ortada açılır, ofis çevresinde görünür */
   #bos[hidden], #bos [hidden] { display:none !important; }
   /* tema değişkenleri: koyu (varsayılan) / açık; "otomatik" ofisin saatine göre seçer (gorunumUygula) */
   #bos { --os-yazi:#eceef5; --os-soluk:#9aa0b4; --os-p:#cfd1da; --os-vy:var(--vurgu); --os-kenar:#3a3f53; --os-kart:rgba(18,20,30,.7); --os-oge:rgba(31,35,51,.92); --os-oge-kenar:#343a50;
@@ -522,10 +522,10 @@
 
   function icerikCiz(id = uygulama) {
     const fn = { hedefler: hedeflerCiz, isler: islerCiz, fikirler: fikirlerCiz, yapilanlar: yapilanlarCiz, posta: postaCiz, mesajlar: mesajlarCiz, projeler: projelerCiz, odak: odakCiz, ayarlar: ayarlarCiz,
-      terminal: terminalCiz, sutlac: oyunCiz, gizli: gizliCiz }[id];
+      terminal: terminalCiz, claudekodu: () => (window.OFIS_CLAUDE_KODU ? window.OFIS_CLAUDE_KODU.ciz() : bosMesaj("Claude Code modülü yüklenmedi.")), sutlac: oyunCiz, gizli: gizliCiz }[id];
     const p = pencereler.get(id); if (!fn || !p) return;
     const kaydirma = p.ic.scrollTop;
-    p.ic.style.padding = id === "mesajlar" ? "10px 12px" : id === "terminal" || id === "sutlac" ? "0" : "";
+    p.ic.style.padding = id === "mesajlar" ? "10px 12px" : id === "terminal" || id === "sutlac" || id === "claudekodu" ? "0" : "";
     p.ic.replaceChildren(...[].concat(fn())); p.ic.scrollTop = kaydirma;
   }
   function sorDugmesi(metin, ajan, istem) { return dugme(metin, () => { mesajaGit(ajan, istem); }, "k-dugme"); }
@@ -1289,14 +1289,15 @@
   // Masaya git, sonra aç (E noktası masanın önünde; oyuncu sandalyeye geçer)
   function masayaGecVeAc() {
     const ic = I(), o = ic.oyuncu;
-    if (Math.hypot(o.x - MASA[0], o.y - MASA[1]) < 0.6) return ac();
+    if (Math.hypot(o.x - MASA[0], o.y - MASA[1]) < (o.oturak ? 1.6 : 0.6) || Math.hypot(o.x - MASA[0], o.y - (MASA[1] - 2)) < 1.2) return ac();   // masanın önündeki koltukta ya da kendi koltuğunda (masanın arkası) yürümeden aç
     ic.gonder(o, MASA, () => ac());
   }
 
   const MODUL = {
     basla() {
       kur();
-      I().NESNELER.push({ x: MASA[0], y: MASA[1], r: 1.35, etiket: () => "💻 Bilgisayarı aç", fn: masayaGecVeAc });
+      I().NESNELER.push({ x: MASA[0], y: MASA[1], r: 1.35, etiket: () => "💻 Bilgisayarı aç", fn: masayaGecVeAc, oturunca: true, oncelik: 0.6 });
+      I().NESNELER.push({ x: MASA[0], y: MASA[1] - 2, r: 1.1, etiket: () => "💻 Bilgisayarı aç", fn: masayaGecVeAc, oturunca: true, oncelik: 0.8 });   // kendi koltuğunda (masanın arkası): "Otur" yerine bilgisayar   // oturunca "Kalk" yerine bu öner (kalkmak için yürü)
       if (ANAHTAR) { yenile(false); setInterval(() => { if (!acik) yenile(false); }, 5 * 60000); }
     },
     tus(e) {
