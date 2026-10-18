@@ -775,7 +775,7 @@
       if (!o.dolu && d <= 1.7) dene("oturak", o, d - 0.1, `Otur (${o.ad})`, o.x * T + 8, o.y * T - T);
     }
     for (const n of NESNELER) {
-      const d = Math.hypot(n.x - oyuncu.x, n.y - oyuncu.y); if (d <= n.r) dene("nesne", n, d - 0.3, n.etiket(), oyuncu.x * T + 8, oyuncu.y * T - T - 10);
+      const d = Math.hypot(n.x - oyuncu.x, n.y - oyuncu.y); if (d <= n.r) dene("nesne", n, oyuncu.oturak && n.oturunca ? -2 : d - 0.3 - (n.oncelik || 0), n.etiket(), oyuncu.x * T + 8, oyuncu.y * T - T - 10);
     }
     return en;
   }

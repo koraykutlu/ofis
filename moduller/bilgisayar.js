@@ -1289,14 +1289,15 @@
   // Masaya git, sonra aç (E noktası masanın önünde; oyuncu sandalyeye geçer)
   function masayaGecVeAc() {
     const ic = I(), o = ic.oyuncu;
-    if (Math.hypot(o.x - MASA[0], o.y - MASA[1]) < 0.6) return ac();
+    if (Math.hypot(o.x - MASA[0], o.y - MASA[1]) < (o.oturak ? 1.6 : 0.6) || Math.hypot(o.x - MASA[0], o.y - (MASA[1] - 2)) < 1.2) return ac();   // masanın önündeki koltukta ya da kendi koltuğunda (masanın arkası) yürümeden aç
     ic.gonder(o, MASA, () => ac());
   }
 
   const MODUL = {
     basla() {
       kur();
-      I().NESNELER.push({ x: MASA[0], y: MASA[1], r: 1.35, etiket: () => "💻 Bilgisayarı aç", fn: masayaGecVeAc });
+      I().NESNELER.push({ x: MASA[0], y: MASA[1], r: 1.35, etiket: () => "💻 Bilgisayarı aç", fn: masayaGecVeAc, oturunca: true, oncelik: 0.6 });
+      I().NESNELER.push({ x: MASA[0], y: MASA[1] - 2, r: 1.1, etiket: () => "💻 Bilgisayarı aç", fn: masayaGecVeAc, oturunca: true, oncelik: 0.8 });   // kendi koltuğunda (masanın arkası): "Otur" yerine bilgisayar   // oturunca "Kalk" yerine bu öner (kalkmak için yürü)
       if (ANAHTAR) { yenile(false); setInterval(() => { if (!acik) yenile(false); }, 5 * 60000); }
     },
     tus(e) {
