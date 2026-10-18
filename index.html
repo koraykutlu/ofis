@@ -234,7 +234,7 @@
   #sGiris { flex:1; resize:none; height:58px; background:#141821; color:var(--yazi); border:1px solid var(--kenar); border-radius:8px; padding:7px 9px; font:inherit; font-size:14px; }
   #sGonder { background:var(--vurgu); color:#1d2029; border:0; border-radius:8px; padding:0 14px; font:inherit; font-weight:700; cursor:pointer; }
   /* Bilgisayar penceresi (moduller/bilgisayar.js): masadaki bilgisayardan Ada'yla uzun sohbet; tema değişkenleriyle (pembe temada pembe) */
-  #bilg { position:absolute; top:8px; left:8px; right:8px; bottom:40px; z-index:7; display:flex; flex-direction:column; box-shadow:0 12px 36px rgba(0,0,0,.6); color:var(--yazi); }
+  #bilg { position:absolute; top:6%; bottom:11%; left:50%; transform:translateX(-50%); width:min(940px, 84%); z-index:7; display:flex; flex-direction:column; box-shadow:0 12px 36px rgba(0,0,0,.6); color:var(--yazi); }
   #bilg[hidden] { display:none; }
   #bilg .bb { display:flex; align-items:center; gap:8px; padding:2px 4px 8px; border-bottom:2px solid var(--kenar); flex-wrap:wrap; }
   #bilg .bbaslik { font-weight:700; color:var(--vurgu); font-size:16px; } #bilg .bosluk { flex:1; }
@@ -274,7 +274,7 @@
   #bGiris { flex:1; resize:none; height:62px; background:var(--zemin); color:var(--yazi); border:1px solid var(--kenar); border-radius:8px; padding:8px 10px; font:inherit; font-size:14.5px; }
   #bilg .bgonder { background:var(--vurgu); color:#1d2029; border:0; font-weight:700; padding:0 18px; } #bilg .bgonder:hover { filter:brightness(1.1); }
   #bilg .oneriKart { align-self:flex-start; max-width:min(78%, 760px); }
-  #bilg.yan { left:auto; width:min(640px, 66%); } #bilg.yan .bk { width:150px; }
+  #bilg.yan { left:auto; right:8px; top:8px; bottom:40px; transform:none; width:min(640px, 66%); } #bilg.yan .bk { width:150px; }
   #bilg .bsecenek { align-self:flex-start; max-width:min(78%, 760px); display:flex; flex-direction:column; gap:7px; background:var(--panel); border:1px solid var(--vurgu); border-radius:12px; padding:9px 11px; }
   #bilg .bsoru { font-weight:700; color:var(--vurgu); font-size:14.5px; }
   #bilg .bsecler { display:flex; flex-direction:column; gap:5px; }
