@@ -58,6 +58,7 @@ VERI = Path(os.environ.get("LOCALAPPDATA", tempfile.gettempdir())) / "OfisDemo"
 CALISMA = VERI / "calisma"                            # claude'un cwd'si: boş klasör (vault hook'ları ve CLAUDE.md yüklenmez)
 PROFIL = VERI / "profil"                              # uygulama penceresinin ayrı tarayıcı profili
 GUNLUK = VERI / "gunluk.txt"
+KRITIK = VERI / "kritik.json"                         # tam kipte kritik iş kilidinin onay kayıtları (araclar/kritik_kanca.py)
 DUZEN = VERI / "duzen.json"                           # Düzenle modunun kullanıcı düzeni (--duzen ile değişir: testler ayrı dosya kullanır)
 GORUNUM = VERI / "gorunum.json"                       # Gardırop: oyuncunun görünümü (--gorunum ile değişir)
 KISI_DOSYA = VERI / "kisi.json"                       # kişi ayarı (aşağıda KISI_VARSAYILAN alanları); yoksa genel varsayılanlar
@@ -305,13 +306,11 @@ def kisi_acik():
 
 def veri_ayarla(klasor):
     """VERI ve ondan türeyen tüm yollar (--veri)."""
-    global VERI, CALISMA, PROFIL, GUNLUK, DUZEN, GORUNUM, KISI_DOSYA
+    global VERI, CALISMA, PROFIL, GUNLUK, DUZEN, GORUNUM, KISI_DOSYA, KRITIK
     VERI = Path(os.path.expandvars(klasor)).resolve()
     CALISMA, PROFIL, GUNLUK = VERI / "calisma", VERI / "profil", VERI / "gunluk.txt"
     DUZEN, GORUNUM, KISI_DOSYA = VERI / "duzen.json", VERI / "gorunum.json", VERI / "kisi.json"
-
-
-GUNLER = ("Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar")
+    KRITIK = VERI / "kritik.json"
 
 
 def companion_ozeti():
@@ -326,6 +325,9 @@ def companion_ozeti():
     return kart or "(Last-Session.md yok ya da boş)", konular or "(Threads.md yok ya da boş)"
 
 
+GUNLER = ("Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar")
+
+
 def sistem_istemi(ajan="ada", tam=False):
     c = COMPANION.name if COMPANION else "🔮 850-Companion"
     core = oku(COMPANION / "Core.md", 6000) if COMPANION else ""
@@ -336,8 +338,10 @@ def sistem_istemi(ajan="ada", tam=False):
     simdi = datetime.now()
     saat = f"Şu an: {GUNLER[simdi.weekday()]} {simdi:%d.%m.%Y %H:%M} (bilgisayarın saati). Saat ya da tarih lazımsa buna bak, tahmin etme."
     TAM_YAZMA = (f"Tam yetenek kipindesin: çalışma klasörün vault, Edit/Write/Bash/WebFetch/WebSearch açık; AGENTS.md ve vault kuralları geçerli. {kisa} bir şeyi kaydetmeni, not almanı ya da yapmanı isterse "
-                 "doğrudan yap ve ne yaptığını (hangi dosya, hangi komut) kısaca söyle; onay kartı bloğu (<oneri>) KULLANMA. Geri alınamaz işlemlerde (silme, git push/reset, dışarıya gönderme, "
-                 "kimliğe ya da ödemeye dokunan her şey) önce sor ve açık onay almadan yapma. Vault dışında yalnız kullanıcının istediği yere dokun.\n")
+                 "doğrudan yap ve ne yaptığını (hangi dosya, hangi komut) kısaca söyle; onay kartı bloğu (<oneri>) KULLANMA. Kritik işler (silme, git push/reset/config, ağa çıkan komutlar, satır içi kod, program kurma, "
+                 "vault dışına yazma) ofisin kilidinden geçer: araç \"KRİTİK İŞ KİLİDİ\" diye reddederse başka yoldan deneme; ne yapmak istediğini ve neden "
+                 "kritik olduğunu kısaca söyle, onay penceresinin açıldığını belirt ve dur. Kilit yakalamasa da geri alınamaz ya da dışarıya giden bir işte önce sor. "
+                 "Vault dışında yalnız kullanıcının istediği yere dokun.\n")
     yazma = TAM_YAZMA if tam else f"""Yazma aracın yok. {kisa} bir şeyi kaydetmeni, not almanı, görev eklemeni isterse (ya da açıkça işine yarayacaksa ve sorarak), cevabının
 EN SONUNA tek bir öneri bloğu koy; oyun bunu onay kartına çevirir, {kisa} "Onayla" demeden hiçbir şey yazılmaz:
 <oneri>{{"tur": "not" | "gorev" | "ekle", "yol": "notes/....md | tasks/....md", "baslik": "...", "metin": "...", "proje": "..."}}</oneri>
@@ -442,7 +446,7 @@ def kayit_ayarla(acik):
 # ---------------- tam yetenek kipi ----------------
 # Çalışanlar varsayılan olarak yalnız-okur, Haiku ve boş bir çalışma klasöründe konuşur (sor). Bu kip AÇIKKEN (Ayarlar > "Tam yetenek"; VERI/tam-yetenek.json {"acik": true};
 # varsayılan KAPALI) yerel pencereden gelen sohbetlerde claude vault klasöründe çalışır (AGENTS.md ve kancalar yüklenir), varsayılan model Sonnet olur, Edit/Write/Bash/web açılır.
-# Tablet kapısından gelen sohbetlerde HİÇBİR ZAMAN açılmaz (TabletIsleyici.TABLET_KAPISI); ayar da yalnız yerel pencereden değişir (/api/ayar-sunucu tablette yok).
+# Tablet kapısından gelen sohbetlerde ayrı "Tabletten de" anahtarı (tam-yetenek.json > tablet, varsayılan KAPALI) açılmadıkça kapalıdır (TabletIsleyici.TABLET_KAPISI); ayar da yalnız yerel pencereden değişir (/api/ayar-sunucu tablette yok).
 def tam_durum():
     try:
         d = json.loads((VERI / "tam-yetenek.json").read_text(encoding="utf-8-sig"))
@@ -468,6 +472,53 @@ def tam_ayarla(acik=None, tablet=None):
     gec.write_text(json.dumps(d), encoding="utf-8")
     os.replace(gec, VERI / "tam-yetenek.json")
     gunluk(f"tam yetenek kipi: açık={d['acik']} tablet={d['tablet']}")
+
+
+# Kritik iş kilidi: tam kipte claude'a PreToolUse kancası (araclar/kritik_kanca.py) verilir. Kanca silme, git push/reset/config, ağa çıkan komut,
+# satır içi kod, program kurma ve vault dışına yazmayı reddedip VERI/kritik.json > bekleyen'e yazar; sohbet bitince oyun "Emin misin?" penceresi
+# gösterir (/api/kritik). "Evet": iş (aynı araç + birebir aynı komut) 10 dk içinde bir kez geçer ve sohbet "onayladım" ile sürer.
+def kritik_ayar():
+    py = Path(sys.executable)
+    if py.name.lower() == "pythonw.exe" and (py.parent / "python.exe").is_file():
+        py = py.parent / "python.exe"   # kanca stdin/stdout kullanır
+    komut = f'"{py.as_posix()}" -I "{(KOK / "araclar" / "kritik_kanca.py").as_posix()}"'
+    ayar = {"hooks": {"PreToolUse": [{"matcher": "Bash|PowerShell|Write|Edit|MultiEdit|NotebookEdit", "hooks": [{"type": "command", "command": komut, "timeout": 20}]}]}}
+    dosya = VERI / "kritik-ayar.json"
+    VERI.mkdir(parents=True, exist_ok=True)
+    dosya.write_text(json.dumps(ayar, ensure_ascii=False), encoding="utf-8")
+    return dosya
+
+
+def kritik_oku():
+    try:
+        d = json.loads(KRITIK.read_text(encoding="utf-8"))
+        return {"onayli": dict(d.get("onayli") or {}), "bekleyen": dict(d.get("bekleyen") or {})}
+    except (OSError, ValueError, AttributeError):
+        return {"onayli": {}, "bekleyen": {}}
+
+
+def kritik_yaz(d):
+    gec = KRITIK.with_name(KRITIK.name + ".tmp")
+    gec.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
+    os.replace(gec, KRITIK)
+
+
+def kritik_bekleyen(kosu):
+    return [{"jeton": j, "arac": v.get("arac", ""), "is": v.get("is", ""), "neden": v.get("neden", "")}
+            for j, v in kritik_oku()["bekleyen"].items() if v.get("kosu") == kosu][:3]
+
+
+def kritik_karar(jeton, evet):
+    with _kilit:
+        d = kritik_oku()
+        k = d["bekleyen"].pop(str(jeton), None)
+        if not k:
+            return None
+        if evet:
+            d["onayli"][k["ozet"]] = time.time()
+        kritik_yaz(d)
+    gunluk(f"kritik iş {'onaylandı' if evet else 'reddedildi'}: {k.get('neden')}: {str(k.get('is'))[:200]}")
+    return k
 
 
 def ofis_notu_ekle(blok):
@@ -579,6 +630,9 @@ def sor(istek, yaz, tablet=False):
     arg = [exe, "-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages",
            "--model", model, "--effort", efor, "--add-dir", str(VAULT), *araclar,
            "--append-system-prompt", sistem_istemi(ajan, tam_kip)]
+    kosu = secrets.token_urlsafe(8)
+    if tam_kip:
+        arg[-2:-2] = ["--settings", str(kritik_ayar())]   # kritik iş kilidi (araclar/kritik_kanca.py): onaysız silme/push/dışarı gönderme yok
     with _kilit:
         if _surec and _surec.poll() is None:
             return yaz({"tur": "hata", "metin": "Ada şu an başka bir soruyla meşgul."})
@@ -586,6 +640,7 @@ def sor(istek, yaz, tablet=False):
             arg += ["--resume", oturum]
         CALISMA.mkdir(parents=True, exist_ok=True)
         ortam = {k: v for k, v in os.environ.items() if k not in ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN")}   # abonelik kullanılsın
+        ortam.update(OFIS_KRITIK=str(KRITIK), OFIS_VAULT=str(VAULT), OFIS_KOSU=kosu)
         _surec = p = subprocess.Popen(arg, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=str(VAULT if tam_kip else CALISMA),
                                       env=ortam, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     zamanlayici = threading.Timer(ZAMAN_ASIMI, lambda: p.poll() is None and p.kill())
@@ -645,7 +700,7 @@ def sor(istek, yaz, tablet=False):
             else:
                 oneriler.append({"gecersiz": neden})
         threading.Thread(target=sohbet_kaydet, args=(ajan, soru, tam, MODELLER[model]), daemon=True).start()   # konuşulan ikinci beyinde kalsın
-        yaz({"tur": "bitti", "oturum": sid, "metin": gorunur(tam).strip(), "oneriler": oneriler,
+        yaz({"tur": "bitti", "oturum": sid, "metin": gorunur(tam).strip(), "oneriler": oneriler, "kritik": kritik_bekleyen(kosu) if tam_kip else [],
              "sure": round((sonuc.get("duration_ms") or 0) / 1000, 1)})
     except (BrokenPipeError, ConnectionError):
         if p.poll() is None:
@@ -944,6 +999,13 @@ class Isleyici(BaseHTTPRequestHandler):
             return self._json(200, tablet_durum())
         if yol == "/api/iptal":
             return self._json(200, {"iptal": iptal()})
+        if yol == "/api/kritik":
+            if self.TABLET_KAPISI and not tam_acik(True):
+                return self._json(403, {"hata": "Tabletten tam yetenek kapalı."})
+            k = kritik_karar(g.get("jeton") or "", g.get("karar") == "evet")
+            if not k:
+                return self._json(404, {"hata": "Bu onay bulunamadı ya da süresi geçti."})
+            return self._json(200, {"ok": True, "is": k.get("is", ""), "metin": "Onaylandı: bir kez çalışabilir." if g.get("karar") == "evet" else "Vazgeçildi, çalışmayacak."})
         if yol == "/api/onay":
             k = _bekleyen.pop(str(g.get("jeton") or ""), None)
             if not k:
@@ -1047,7 +1109,7 @@ TABLET_CEREZ = "ofis_tablet"
 TABLET_OTURUM_SN = 14 * 24 * 3600           # giriş çerezi ömrü
 TABLET_HIZ = ziyaret.Hiz(30, 600)           # IP başına istek hızı (sayfa açılışında ~100 kaynak birden istenir: kapasite büyük)
 TABLET_HIZ_GIRIS = ziyaret.Hiz(1 / 3, 8)    # giriş yapmamış istekler ve /giris: IP başına 3 sn'de 1
-TABLET_IZINLI_API = ("/api/durum", "/api/sor", "/api/iptal", "/api/onay", "/api/duzen", "/api/gorunum", "/api/nabiz", "/api/pano", "/api/panel", "/api/gercek", "/api/ofis-kayit")
+TABLET_IZINLI_API = ("/api/durum", "/api/sor", "/api/iptal", "/api/onay", "/api/kritik", "/api/duzen", "/api/gorunum", "/api/nabiz", "/api/pano", "/api/panel", "/api/gercek", "/api/ofis-kayit")
 _ip_onbellek = {"t": 0.0, "v": []}
 
 
