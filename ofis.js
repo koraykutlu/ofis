@@ -1649,7 +1649,7 @@
   addEventListener("blur", () => { tuslar.clear(); tekAdim = null; });
   function kameraDegis() {
     kameraYakin = !kameraYakin;
-    el("kamera").textContent = kameraYakin ? "🎥 Yakın kamera" : "🗺️ Tüm ofis"; el("kamera").classList.toggle("secili", kameraYakin);
+    el("kamera").textContent = kameraYakin ? "🎥 Yakın" : "🗺️ Tüm ofis"; el("kamera").classList.toggle("secili", kameraYakin);   // düğme Ayarlar'da (Kamera satırı)
   }
   el("kamera").onclick = kameraDegis;
   document.querySelectorAll("[data-hiz]").forEach((b) => (b.onclick = () => {
@@ -1670,8 +1670,8 @@
   el("ofisAcDugme").onclick = () => { ofisAc(); cv.focus(); };
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !kapatOnay.hidden) { onayGoster(false); e.stopPropagation(); } }, true);
   el("ses").onclick = () => {
-    if (SES.acik) { SES.kapat(); el("ses").textContent = "🔇 Sesi aç"; el("ses").classList.remove("secili"); }
-    else { SES.ac(); el("ses").textContent = "🔊 Ses açık"; el("ses").classList.add("secili"); }
+    const yaz = (acik) => { el("ses").textContent = acik ? "🔊" : "🔇"; const t = acik ? "Sesi kapat" : "Sesi aç"; el("ses").title = t; el("ses").setAttribute("aria-label", t); el("ses").classList.toggle("secili", acik); };
+    if (SES.acik) { SES.kapat(); yaz(false); } else { SES.ac(); yaz(true); }
   };
 
   // ---------- başlat ----------

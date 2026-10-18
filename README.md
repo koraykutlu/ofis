@@ -79,7 +79,7 @@ karakterin oraya yürür, yapılmamış işler ünlemle görünür) ve **⚙️ 
 gün süresi 2/4/6 dk (tarayıcıda saklanır). Sabah pencerelerden ışık hüzmesi, akşam lambalar; ses odaya göre değişir, sağ/sol konumludur.
 Mobilyalar paketin gölgeli sürümünden, masadaki ajanlar oturur.
 **Asistanla gerçek beyin sohbeti (17 Ekim):** masaüstündeki **Ofis** kısayolu (`ofis.pyw`) oyunu yerel bir sunucuyla
-(127.0.0.1:8540) bir uygulama penceresinde açar. Ada'ya `E` → "Beyne sor (gerçek)" ya da üstteki 🧠 düğmesi: soru Claude Code
+(127.0.0.1:8540) bir uygulama penceresinde açar. Ada'ya `E` → "Beyne sor (gerçek)" (ya da telefon / bilgisayarda Mesajlar): soru Claude Code
 aboneliğiyle (`claude -p`, API anahtarı yok) cevaplanır, Ada vault'u salt-okur araçlarla (Read/Grep/Glob) tarar ve ararken ofiste
 arşiv rafına yürür. Model (Haiku/Sonnet/Opus/Fable) ve efor (düşükten en yükseğe) sohbet kutusunun başlığından seçilir.
 **Yazma yalnız onayla:** Ada bir not, görev ya da nota ekleme önerirse kart çıkar; "Onayla" deyince `beyin.py note-create/task-create`

@@ -28,6 +28,15 @@
   .saat { margin-left:auto; color:var(--soluk); font-variant-numeric:tabular-nums; }
   header button { background:var(--panel); color:var(--yazi); border:1px solid var(--cizgi); border-radius:8px; padding:5px 10px; cursor:pointer; font:inherit; }
   header button.secili { border-color:var(--vurgu); color:var(--vurgu); }
+  header button.simge { min-width:38px; font-size:16px; line-height:1.35; text-align:center; }
+  /* ofisin üstündeki küçük düğmeler: tam ekran (sağ üst), sağ panel tutamağı (sağ kenar ortası) */
+  .sahneDugme { position:absolute; top:8px; right:8px; z-index:4; width:32px; height:32px; display:grid; place-items:center; padding:0; cursor:pointer;
+    border:6px solid transparent; border-image:url(varliklar/ui/cerceve-koyu.png) 4 fill / 6px / 0 stretch; image-rendering:pixelated; background:none; color:#f1eef8; font:16px/1 var(--yt); opacity:.82; }
+  .sahneDugme:hover, .sahneDugme:focus-visible { opacity:1; filter:brightness(1.18); } .sahneDugme.secili { border-image-source:url(varliklar/ui/cerceve-acik.png); color:#2b2a3d; }
+  .kenarTutamak { position:absolute; right:0; top:50%; z-index:4; width:16px; height:56px; margin-top:-28px; padding:0; cursor:pointer; border:1px solid var(--cizgi); border-right:0;
+    border-radius:8px 0 0 8px; background:rgba(29,32,41,.82); color:var(--vurgu); font:700 15px/1 var(--yt); opacity:.7; transition:opacity .15s, width .15s; }
+  .kenarTutamak:hover, .kenarTutamak:focus-visible { opacity:1; width:20px; }
+  body.uzak .kenarTutamak { display:none; }
   main { flex:1; min-height:0; display:grid; grid-template-columns: minmax(0,1fr) 290px; gap:12px; padding:10px 12px 12px; }
   @media (max-width: 860px) { main { grid-template-columns: 1fr; grid-template-rows: minmax(0,1fr) 34%; } }
   .sahne { position:relative; min-height:0; display:flex; flex-direction:column; background:#0d0e12; border:1px solid var(--cizgi); border-radius:12px; overflow:hidden; }
@@ -354,6 +363,7 @@
   html.dokunmatik body { padding:env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left); }   /* alt boşluk yan boşluklarla (12 px) aynı: main'in kendi dolgusu */
   html.dokunmatik .ipucu { display:none; }
   html.dokunmatik header button, html.dokunmatik #secenekler button { min-height:44px; }
+  html.dokunmatik .sahneDugme { width:44px; height:44px; } html.dokunmatik .kenarTutamak { width:26px; height:72px; margin-top:-36px; }
   #dokunmatik { display:none; }
   html.dokunmatik #dokunmatik { display:block; position:absolute; inset:0; pointer-events:none; z-index:6; }
   html.dokunmatik #dokunmatik > * { pointer-events:auto; }
@@ -379,17 +389,15 @@
   <button data-hiz="1" class="secili">1×</button><button data-hiz="2">2×</button><button data-hiz="4">4×</button>
   <button id="bastan" hidden>Baştan oynat</button>
   <button id="ofisKapat" title="Günü bitir: Ada gün kapatma konuşması, karne, sonra ekip eve gider">🌙 Ofisi kapat</button>
-  <button id="ses">🔇 Sesi aç</button>
-  <button id="kamera" class="secili">🎥 Yakın kamera</button>
-  <button id="sohbetDugme">🧠 Beyne sor</button>
-  <button id="telefonDugme" title="Telefon: ofisin her yerinden BeyinOS uygulamaları (tuşu Ayarlar'dan seçilir)">📱 Telefon</button>
-  <button id="panelDugme" aria-pressed="true" title="Sağdaki paneli aç/kapat">▤ Panel</button>
-  <button id="tamDugme" hidden title="Tam ekran">⛶ Tam ekran</button>
+  <button id="sohbetDugme" hidden>🧠 Beyne sor</button>   <!-- çubuktan kalktı (telefondaki Mesajlar/Claude Code aynı işi görür); sohbet.js'e ve Ada'nın "Beyne sor" seçeneğine bağlı kalır -->
+  <button id="telefonDugme" class="simge" title="Telefon (Ayarlar'dan seçilen tuş)" aria-label="Telefon">📱</button>
+  <button id="ses" class="simge" title="Sesi aç" aria-label="Sesi aç">🔇</button>
   <button id="duzenDugme" aria-expanded="false" aria-controls="duzenPanel" hidden>🛠️ Düzenle</button>
-  <button id="ayarDugme" aria-expanded="false" aria-controls="ayarPanel">⚙️ Ayarlar</button>
+  <button id="ayarDugme" class="simge" aria-expanded="false" aria-controls="ayarPanel" title="Ayarlar" aria-label="Ayarlar">⚙️</button>
 </header>
 <div id="ayarPanel" class="ayar" role="dialog" aria-label="Ayarlar" hidden>
   <h2>Ayarlar</h2>
+  <div class="s"><span>Kamera (Z)</span><div class="seg"><button id="kamera" class="secili" title="Yakın kamera ile tüm ofis arasında geç (Z)">🎥 Yakın</button></div></div>
   <label class="s"><span>Genel ses</span><input type="range" id="a_genel" min="0" max="150" step="5"><output id="o_genel"></output></label>
   <label class="s"><span>Ambiyans</span><input type="range" id="a_ambiyans" min="0" max="150" step="5"><output id="o_ambiyans"></output></label>
   <label class="s"><span>Efektler</span><input type="range" id="a_efekt" min="0" max="150" step="5"><output id="o_efekt"></output></label>
@@ -432,6 +440,8 @@
 <main>
   <div class="sahne">
     <canvas id="c" tabindex="0" aria-label="Ofis haritası. Ok tuşları ile {oyuncu:ı} yürüt, E ile yakındaki ajanla konuş."></canvas>
+    <button id="tamDugme" class="sahneDugme" hidden title="Tam ekran" aria-label="Tam ekran">⛶</button>
+    <button id="panelDugme" class="kenarTutamak" aria-pressed="true" title="Sağ paneli kapat" aria-label="Sağ paneli aç/kapat">›</button>
     <div id="diyalog" class="cerceve" role="dialog" aria-live="polite">
       <canvas id="portre" width="18" height="22"></canvas>
       <div class="govde"><div><span class="ad" id="dAd"></span><span class="rol" id="dRol"></span></div><div class="metin" id="dMetin"></div><div id="secenekler"></div></div>
