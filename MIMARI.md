@@ -143,7 +143,7 @@ Tarayıcıda çalışan, derleme adımı olmayan tek sayfa. Sunucu: `py -3 -m ht
 - `/api/sor` NDJSON akışı: `claude -p --output-format stream-json --verbose --include-partial-messages --model <takma ad> --effort <düzey>
   --add-dir <vault> --allowedTools Read Grep Glob` (yazan araçlar kapalı), cwd boş `calisma` klasörü (vault hook'ları/CLAUDE.md yüklenmez),
   `ANTHROPIC_API_KEY` ortamdan silinir (abonelik). Olaylar: `basla`, `arac {ad, hedef}`, `metin {parca}`, `bitti {oturum, metin, oneriler}`, `hata`.
-  Ada'nın kimliği `sistem_istemi()`nde (Core.md + Kurallar.md eklenir). Oturum devamı `--resume` yalnız bu sunucunun açtığı oturumlara.
+  Ada'nın kimliği `sistem_istemi()`nde (Core.md + Kurallar.md ile `companion_ozeti()`: en üst Last-Session kartı ve Threads başlıkları eklenir; Claude hook'suz, boş klasörde açıldığı için "geçen sefer ne yapıyorduk" sorusu buradan cevaplanır; yollar `COMPANION`'dan bulunur, sabit değildir). Oturum devamı `--resume` yalnız bu sunucunun açtığı oturumlara.
 - Onaylı yazma: Ada cevabın sonuna `<oneri>{tur: not|gorev|ekle, yol, baslik, metin, proje}</oneri>` koyar; `oneri_dogrula` (notes/ ya da tasks/, .md,
   vault içi, not/görevde dosya yok, eklemede var) → jetonla bekler → `/api/onay` evet: `beyin.py note-create` / `task-create` / dosya sonuna ekleme + `sync`.
 - Oyun tarafı `window.OFIS_AI` (ofis.js): `arac()` Ada'yı arşiv rafına (`enYakinYurur(29, 4)`) yollar, `ozel = "beyin"` (olay ve rutin beklemez/almaz);
