@@ -12,6 +12,7 @@ Oyunu sunar ve Ada'nın gerçek beyin sohbetini Claude Code aboneliğiyle (`clau
 - Asansörle ziyaret (ziyaret.py): ağa açılan TEK şey ayrı ziyaret dinleyicisidir (varsayılan kapalı; yalnız /z/* JSON, dosya sunmaz). Bu 127.0.0.1 sunucusu aynı kalır;
   yalnız anahtarlı /api/ziyaret/* uçları eklendi (ayar, eşleşme, ziyaret isteği, ev sahibi anlık görüntüsü). Eşleşme ve ayar VERI/eslesmeler.json, ziyaret.json.
 """
+import base64
 import hashlib
 import html
 import ipaddress
@@ -67,6 +68,14 @@ MODELLER = {"haiku": "Haiku 5.5", "sonnet": "Sonnet 5.5", "opus": "Opus 5.5", "f
 EFORLAR = ["low", "medium", "high", "xhigh", "max"]
 OTURUM_RE = re.compile(r"[0-9a-f-]{20,60}")
 ONERI_RE = re.compile(r"<oneri>(.*?)</oneri>", re.S)
+SECENEK_RE = re.compile(r"<secenek>(.*?)</secenek>", re.S)   # Claude Code uygulaması: Ada tıklanabilir seçenek/onay kartı sorabilir
+SECENEK_TALIMAT = ("Kullanıcıya bir seçim sunmak, çok adımlı bir işte yön sormak ya da seçenekli bir onay istemek gerektiğinde düz metinle \"şunu mu bunu mu\" yazmak yerine "
+                   "cevabının EN SONUNA tek bir <secenek> bloğu koy: <secenek>{\"soru\": \"Kısa soru\", \"secenekler\": [{\"etiket\": \"Kısa ad\", \"aciklama\": \"Tek cümle\"}, ...], "
+                   "\"coklu\": false}</secenek>. En çok 6 seçenek, her cevapta en çok bir blok; <oneri> bloğuyla aynı cevapta kullanma. Kullanıcı karta tıklayınca cevabı bir sonraki "
+                   "mesajda gelir, beklemeden bir şey yapma. Kritik işlerin (silme, push, ağa çıkma) onayı için ofisin \"Emin misin?\" kilidi geçerlidir, onun yerine <secenek> kullanma.\n")
+CC_ID_RE = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
+RESIM_EN_FAZLA = 6 * 1024 * 1024
+RESIM_SINIR = 8_500_000        # /api/claude/resim gövdesi (base64); diğer uçlar 200 KB
 ZAMAN_ASIMI = 600
 NABIZ_SURE = 30 * 60          # sayfa nabzı bu kadar kesilirse sunucu kapanır (eskiden 180 sn; arka planda dondurulan pencere erken kapanmasın diye 30 dk)
 
@@ -355,6 +364,7 @@ Blok geçerli JSON olmalı (metindeki satır sonları \\n). "Kaydettim" deme; "o
             '"Kaydettim" deme; "onayına sundum" de. Tek cevapta en çok bir öneri.', 'Kısaca "kaydettim" de ve nereye kaydettiğini söyle. Tek cevapta en çok üç öneri (her biri ayrı blok).')
     if baglam:
         yazma += "\n" + baglam
+    yazma += SECENEK_TALIMAT
     return f"""Sen {ad}'sın ({rol}). {kimlik} {tr_ek(KISI["kullanici_adi"], "ın")} piksel ofis oyununda ("{KISI["ofis_adi"]}") onunla (oyunda {KISI["oyuncu_adi"]} olarak görünüyor)
 masanda konuşuyorsun; ofisin diğer çalışanları da onun ikinci beyninin bölümleridir. Konuşma oyun içi bir sohbet kutusunda görünür.
 Senin alanın (önce buradan bak): {odak}. Alanın dışında bir soru gelirse kısaca cevapla, gerekirse "bunu {KISI["asistan_adi"]} daha iyi bilir" de.
@@ -597,20 +607,45 @@ def oneri_uygula(o):
 
 # ---------------- claude akışı ----------------
 def gorunur(metin):
-    """Ekranda gösterilecek metin: tamamlanmış öneri blokları çıkarılır; yarım kalan blok ve sondaki '<oner' öneki gizlenir."""
-    t = ONERI_RE.sub("", metin)
-    i = t.find("<oneri")
+    """Ekranda gösterilecek metin: tamamlanmış <oneri> ve <secenek> blokları çıkarılır; yarım kalan blok ve sondaki '<oner'/'<secen' öneki gizlenir."""
+    t = SECENEK_RE.sub("", ONERI_RE.sub("", metin))
+    i = min([x for x in (t.find("<oneri"), t.find("<secenek")) if x >= 0], default=-1)
     if i >= 0:
         t = t[:i]
-    for n in range(min(6, len(t)), 0, -1):
-        if "<oneri"[:n] == t[-n:]:
+    for n in range(min(8, len(t)), 0, -1):
+        if t[-n:] in ("<oneri"[:n], "<secenek"[:n]):
             t = t[:-n]
             break
     return t.rstrip() if i >= 0 else t
 
 
+def secenek_dogrula(ham):
+    """Metindeki İLK <secenek> bloğunu çözer ve doğrular; geçersizse None döner (hata fırlatmaz)."""
+    e = SECENEK_RE.search(ham or "")
+    if not e:
+        return None
+    try:
+        o = json.loads(e.group(1).strip(), strict=False)
+    except (ValueError, RecursionError):
+        return None
+    if not isinstance(o, dict):
+        return None
+    soru, liste = _metin(o.get("soru"), "", 300), []
+    sec = o.get("secenekler")
+    if not soru or not isinstance(sec, list) or not 2 <= len(sec) <= 6:
+        return None
+    for x in sec:
+        if not isinstance(x, dict):
+            return None
+        etiket = _metin(x.get("etiket"), "", 60)
+        if not etiket:
+            return None
+        liste.append({"etiket": etiket, "aciklama": _metin(x.get("aciklama"), "", 160)})
+    return {"soru": soru, "secenekler": liste, "coklu": o.get("coklu") is True}
+
+
 def arac_ozeti(ad, girdi):
-    h = girdi.get("file_path") or girdi.get("pattern") or girdi.get("path") or ""
+    h = girdi.get("file_path") or girdi.get("pattern") or girdi.get("path") or girdi.get("command") or girdi.get("url") or girdi.get("query") or ""   # Bash/PowerShell komutu, web adresi/sorgusu (tam yetenek kipi)
     h = str(h).replace("\\", "/")
     v = str(VAULT).replace("\\", "/")
     if h.startswith(v):
@@ -637,7 +672,7 @@ def sor(istek, yaz, tablet=False):
     araclar = (["--allowedTools", "Read", "Grep", "Glob", "Edit", "Write", "Bash", "WebFetch", "WebSearch", "--disallowedTools", "NotebookEdit", "Task"] if tam_kip
                else ["--allowedTools", "Read", "Grep", "Glob", "--disallowedTools", "Bash", "Edit", "Write", "WebFetch", "WebSearch", "NotebookEdit", "Task"])
     arg = [exe, "-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages",
-           "--model", model, "--effort", efor, "--add-dir", str(VAULT), *araclar,
+           "--model", model, "--effort", efor, "--add-dir", str(VAULT), "--add-dir", str(claude_resim_klasor()), *araclar,
            "--append-system-prompt", sistem_istemi(ajan, tam_kip, dogrudan, EKLER["os"].baglam() if bilgisayar else "")]
     kosu = secrets.token_urlsafe(8)
     if tam_kip:
@@ -645,9 +680,13 @@ def sor(istek, yaz, tablet=False):
     with _kilit:
         if _surec and _surec.poll() is None:
             return yaz({"tur": "hata", "metin": "Ada şu an başka bir soruyla meşgul."})
+        if oturum and oturum not in _oturumlar and cc_var(oturum):   # vault'taki gerçek Claude Code oturumu (masaüstü uygulaması dahil): yeniden başlatma sonrası da devam edilir
+            _oturumlar.add(oturum)
+            _tam_oturumlar.add(oturum)
         if oturum and OTURUM_RE.fullmatch(oturum) and oturum in _oturumlar and (oturum in _tam_oturumlar) == tam_kip:
             arg += ["--resume", oturum]
         CALISMA.mkdir(parents=True, exist_ok=True)
+        claude_resim_klasor().mkdir(parents=True, exist_ok=True)
         ortam = {k: v for k, v in os.environ.items() if k not in ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN")}   # abonelik kullanılsın
         ortam.update(OFIS_KRITIK=str(KRITIK), OFIS_VAULT=str(VAULT), OFIS_KOSU=kosu)
         _surec = p = subprocess.Popen(arg, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=str(VAULT if tam_kip else CALISMA),
@@ -718,8 +757,12 @@ def sor(istek, yaz, tablet=False):
             else:
                 oneriler.append({"gecersiz": neden})
         threading.Thread(target=sohbet_kaydet, args=(ajan, soru, tam, MODELLER[model]), daemon=True).start()   # konuşulan ikinci beyinde kalsın
-        yaz({"tur": "bitti", "oturum": sid, "metin": gorunur(tam).strip(), "oneriler": oneriler, "kritik": kritik_bekleyen(kosu) if tam_kip else [],
-             "sure": round((sonuc.get("duration_ms") or 0) / 1000, 1)})
+        bitti = {"tur": "bitti", "oturum": sid, "metin": gorunur(tam).strip(), "oneriler": oneriler, "kritik": kritik_bekleyen(kosu) if tam_kip else [],
+                 "sure": round((sonuc.get("duration_ms") or 0) / 1000, 1)}
+        secenek = secenek_dogrula(tam)   # geçersiz ya da yoksa kart eklenmez
+        if secenek:
+            bitti["secenek"] = secenek
+        yaz(bitti)
     except (BrokenPipeError, ConnectionError):
         if p.poll() is None:
             p.kill()
@@ -733,6 +776,152 @@ def iptal():
             _surec.kill()
             return True
     return False
+
+
+# ---------------- Claude Code oturumları (moduller/claude-kodu.js, "Claude Code" uygulaması) ----------------
+# Vault klasöründe çalışan Claude Code oturumları (masaüstü uygulaması ve tam yetenek kipindeki claude -p, cwd = vault) aynı klasöre yazılır:
+# ~/.claude/projects/<vault yolu>/<oturum>.jsonl. Burası SALT OKUNUR okunur: oturum listesi ve bir oturumun yazışması gösterilir; devam etmek /api/sor ile --resume'dur
+# (yeni mesaj aynı dosyaya eklenir, böylece masaüstü uygulamasında da görünür). Uçlar yalnız yerel pencerede (tablet izin listesinde YOK).
+def cc_klasor():
+    return Path.home() / ".claude" / "projects" / re.sub(r"[^A-Za-z0-9]", "-", str(VAULT))
+
+
+def cc_var(oturum):
+    return bool(CC_ID_RE.fullmatch(oturum or "")) and (cc_klasor() / f"{oturum}.jsonl").is_file()
+
+
+CC_SISTEM_ETIKET = re.compile(r"\s*<(system-reminder|local-command-caveat|local-command-stdout|command-name|command-message|command-args|task-notification|agent-message|ide_[a-z_]+)")
+
+
+def _cc_metin(icerik):
+    """Kullanıcı mesajının düz metni: sistem/komut etiketli bloklar ve araç sonuçları atılır, <pasted_content> sarmalayıcısı kaldırılır; yoksa ''."""
+    bloklar = [icerik] if isinstance(icerik, str) else ([b.get("text", "") for b in icerik if isinstance(b, dict) and b.get("type") == "text"] if isinstance(icerik, list) else [])
+    parca = []
+    for t in bloklar:
+        if not isinstance(t, str) or CC_SISTEM_ETIKET.match(t):
+            continue
+        t = re.sub(r"</?pasted_content[^>]*>", "", t).strip()
+        if t:
+            parca.append(t)
+    return "\n".join(parca)
+
+
+def cc_oturumlar(sayi=60):
+    sonuc = []
+    try:
+        dosyalar = sorted(cc_klasor().glob("*.jsonl"), key=lambda p: p.stat().st_mtime, reverse=True)[:sayi]
+    except OSError:
+        return sonuc
+    for p in dosyalar:
+        if not CC_ID_RE.fullmatch(p.stem):
+            continue
+        baslik = ""
+        try:
+            with open(p, "rb") as f:
+                for satir in f.read(200_000).splitlines()[:400]:
+                    try:
+                        d = json.loads(satir)
+                    except ValueError:
+                        continue
+                    if d.get("type") == "user" and not d.get("isMeta") and not d.get("isSidechain"):
+                        baslik = _cc_metin((d.get("message") or {}).get("content"))
+                        if baslik:
+                            break
+            sonuc.append({"id": p.stem, "baslik": _metin(baslik, "(başlıksız)", 70), "guncel": int(p.stat().st_mtime)})
+        except OSError:
+            continue
+    return sonuc
+
+
+def cc_oturum(oturum, en_fazla=300):
+    """Bir oturumun görünen yazışması: [{k: oyuncu|ajan|arac, m}] (son en_fazla mesaj); (liste, kesildi) döner, yoksa (None, False)."""
+    if not cc_var(oturum):
+        return None, False
+    yol, kesildi, mesajlar = cc_klasor() / f"{oturum}.jsonl", False, []
+    try:
+        with open(yol, "rb") as f:
+            f.seek(0, 2)
+            boy = f.tell()
+            if boy > 8_000_000:
+                f.seek(boy - 8_000_000)
+                f.readline()   # yarım satırı at
+                kesildi = True
+            else:
+                f.seek(0)
+            ham = f.read()
+    except OSError:
+        return None, False
+    for satir in ham.splitlines():
+        try:
+            d = json.loads(satir)
+        except ValueError:
+            continue
+        if d.get("isSidechain") or d.get("isMeta") or d.get("type") not in ("user", "assistant"):
+            continue
+        ic = (d.get("message") or {}).get("content")
+        if d["type"] == "user":
+            t = _cc_metin(ic)
+            if t:
+                mesajlar.append({"k": "oyuncu", "m": t[:20000]})
+        elif isinstance(ic, list):
+            for b in ic:
+                if not isinstance(b, dict):
+                    continue
+                if b.get("type") == "text" and (b.get("text") or "").strip():
+                    mesajlar.append({"k": "ajan", "m": gorunur(b["text"])[:20000] if hasattr(b["text"], "strip") else ""})
+                elif b.get("type") == "tool_use":
+                    mesajlar.append({"k": "arac", "m": (lambda o: f"{o['ad']}{(' ' + o['hedef']) if o['hedef'] else ''}")(arac_ozeti(str(b.get("name") or "?"), b.get("input") if isinstance(b.get("input"), dict) else {}))})
+    if len(mesajlar) > en_fazla:
+        mesajlar, kesildi = mesajlar[-en_fazla:], True
+    return mesajlar, kesildi
+
+
+def claude_istek(yol, sorgu, g, yontem):
+    """/api/claude/* : (kod, veri)."""
+    ad = yol[len("/api/claude/"):]
+    if yontem == "GET" and ad == "oturumlar":
+        return 200, {"liste": cc_oturumlar()}
+    if yontem == "GET" and ad == "oturum":
+        sid = (sorgu.get("id") or [""])[0]
+        m, kes = cc_oturum(sid)
+        if m is None:
+            return 404, {"hata": "Oturum yok."}
+        baslik = next((x["m"] for x in m if x["k"] == "oyuncu"), "")
+        return 200, {"id": sid, "baslik": _metin(baslik, "(başlıksız)", 70), "mesajlar": m, "kes": kes}
+    if yontem == "POST" and ad == "resim":
+        yol_, hata = claude_resim(g)
+        return (200, {"yol": yol_}) if yol_ else (400, {"hata": hata})
+    return 404, {"hata": "yok"}
+
+
+def claude_resim_klasor():
+    return VERI / "claude-resim"
+
+
+def claude_resim(g):
+    """{tur, veri: base64}: biçim imzası denetlenir (png/jpeg/webp/gif), en çok 6 MB; (yol, hata) döner. Claude Read ile bakabilsin diye dosya olarak saklanır."""
+    try:
+        ham = base64.b64decode(str(g.get("veri") or ""), validate=True)
+    except (ValueError, TypeError):
+        return None, "Resim çözülemedi."
+    if not ham or len(ham) > RESIM_EN_FAZLA:
+        return None, "Resim boş ya da 6 MB'dan büyük."
+    if ham.startswith(b"\x89PNG\r\n\x1a\n"):
+        uz = "png"
+    elif ham.startswith(b"\xff\xd8\xff"):
+        uz = "jpg"
+    elif ham[:4] == b"RIFF" and ham[8:12] == b"WEBP":
+        uz = "webp"
+    elif ham[:6] in (b"GIF87a", b"GIF89a"):
+        uz = "gif"
+    else:
+        return None, "Yalnız PNG, JPEG, WebP ve GIF resimleri."
+    klasor = claude_resim_klasor()
+    klasor.mkdir(parents=True, exist_ok=True)
+    yol = klasor / f"{hashlib.sha256(ham).hexdigest()[:16]}.{uz}"
+    if not yol.exists():
+        yol.write_bytes(ham)
+    return str(yol), None
 
 
 # ---------------- Düzenle modu ----------------
@@ -873,6 +1062,9 @@ class Isleyici(BaseHTTPRequestHandler):
             if yol.startswith("/api/ziyaret/") and ZIYARET:
                 kod, v = ZIYARET.api(yol[len("/api/ziyaret/"):], {}, "GET")   # GET yalnız okuma (durum); yan etkili uçlar POST ister
                 return self._json(kod, v)
+            if yol.startswith("/api/claude/"):
+                kod, v = claude_istek(yol, urllib.parse.parse_qs(self.path.split("?", 1)[1]) if "?" in self.path else {}, {}, "GET")
+                return self._json(kod, v)
             if yol == "/api/duzen":
                 return self._json(200, duzen_oku())
             if yol == "/api/gorunum":
@@ -928,7 +1120,7 @@ class Isleyici(BaseHTTPRequestHandler):
             n = int(self.headers.get("Content-Length") or 0)
         except ValueError:
             n = -1
-        if n < 0 or n > 200_000:
+        if n < 0 or n > (RESIM_SINIR if self.path.split("?", 1)[0] == "/api/claude/resim" else 200_000):
             return self._json(413, {"hata": "boyut"})
         try:
             g = json.loads(self.rfile.read(n) or b"{}")
@@ -953,6 +1145,9 @@ class Isleyici(BaseHTTPRequestHandler):
                 except OSError:
                     pass
             return
+        if yol.startswith("/api/claude/"):
+            kod, v = claude_istek(yol, {}, g if isinstance(g, dict) else {}, "POST")
+            return self._json(kod, v)
         if yol == "/api/duzen":
             d = duzen_dogrula(g)
             if not d:

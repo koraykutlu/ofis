@@ -20,10 +20,10 @@
   const UYG = [
     { id: "hedefler", ad: "Hedefler", ikon: "🎯" }, { id: "isler", ad: "İşler", ikon: "✅" }, { id: "fikirler", ad: "Fikirler", ikon: "💡" },
     { id: "yapilanlar", ad: "Yaptıklarım", ikon: "🏆" }, { id: "posta", ad: "Posta", ikon: "✉️" }, { id: "mesajlar", ad: "Mesajlar", ikon: "💬" },
-    { id: "projeler", ad: "Projeler", ikon: "📁" }, { id: "terminal", ad: "Terminal", ikon: "🖥️" }, { id: "sutlac", ad: "Sütlaç Koşusu", ikon: "🐱" },
+    { id: "projeler", ad: "Projeler", ikon: "📁" }, { id: "claudekodu", ad: "Claude Code", ikon: "✳️" }, { id: "terminal", ad: "Terminal", ikon: "🖥️" }, { id: "sutlac", ad: "Sütlaç Koşusu", ikon: "🐱" },
     { id: "odak", ad: "Odak", ikon: "⏱️" }, { id: "ayarlar", ad: "Ayarlar", ikon: "⚙️" }, { id: "gizli", ad: "çok gizli", ikon: "📁", gizli: true },
   ];
-  const CANLI = new Set(["mesajlar", "terminal", "sutlac"]);   // veri yenilenince yeniden çizilmez (yazılan metin / oyun durumu kaybolmasın)
+  const CANLI = new Set(["mesajlar", "terminal", "sutlac", "claudekodu"]);   // veri yenilenince yeniden çizilmez (yazılan metin / oyun durumu kaybolmasın)
   const UNVAN = ["Stajyer", "Muhabir", "Kıdemli muhabir", "Editör", "Yazı işleri müdürü", "Genel yayın yönetmeni", "Efsane"];
   const DURUM_AD = { active: "sürüyor", doing: "sürüyor", inbox: "gelen", todo: "yapılacak", waiting: "bekliyor", blocked: "takıldı", aktif: "aktif", taslak: "taslak" };
 
@@ -522,10 +522,10 @@
 
   function icerikCiz(id = uygulama) {
     const fn = { hedefler: hedeflerCiz, isler: islerCiz, fikirler: fikirlerCiz, yapilanlar: yapilanlarCiz, posta: postaCiz, mesajlar: mesajlarCiz, projeler: projelerCiz, odak: odakCiz, ayarlar: ayarlarCiz,
-      terminal: terminalCiz, sutlac: oyunCiz, gizli: gizliCiz }[id];
+      terminal: terminalCiz, claudekodu: () => (window.OFIS_CLAUDE_KODU ? window.OFIS_CLAUDE_KODU.ciz() : bosMesaj("Claude Code modülü yüklenmedi.")), sutlac: oyunCiz, gizli: gizliCiz }[id];
     const p = pencereler.get(id); if (!fn || !p) return;
     const kaydirma = p.ic.scrollTop;
-    p.ic.style.padding = id === "mesajlar" ? "10px 12px" : id === "terminal" || id === "sutlac" ? "0" : "";
+    p.ic.style.padding = id === "mesajlar" ? "10px 12px" : id === "terminal" || id === "sutlac" || id === "claudekodu" ? "0" : "";
     p.ic.replaceChildren(...[].concat(fn())); p.ic.scrollTop = kaydirma;
   }
   function sorDugmesi(metin, ajan, istem) { return dugme(metin, () => { mesajaGit(ajan, istem); }, "k-dugme"); }
