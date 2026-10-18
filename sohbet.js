@@ -98,6 +98,28 @@
     dg.append(evet, hayir); k.append(bas, ...(o.baslik ? [bsl] : []), on, dg); kutu(id).append(k); asagi();
   }
 
+  // Tam yetenek kipinde kilide takılan kritik iş (silme, push, dışarı gönderme…): "Emin misin?" kartı. Evet: iş bir kez geçer ve Ada'ya "onayladım" gider
+  function kritikKart(id, o) {
+    const ad = AJANLAR[id].ad, k = document.createElement("div"); k.className = "oneriKart kritik";
+    const bas = document.createElement("div"); bas.className = "ob"; bas.innerHTML = `<span class="tur">⚠ Emin misin?</span> `;
+    const ne = document.createElement("b"); ne.textContent = `${ad} kritik bir iş yapmak istiyor: ${o.neden}`;
+    const on = document.createElement("pre"); on.textContent = o.is;
+    const dg = document.createElement("div"); dg.className = "od";
+    const evet = document.createElement("button"); evet.className = "evet"; evet.textContent = "Evet, eminim";
+    const hayir = document.createElement("button"); hayir.className = "hayir"; hayir.textContent = "Hayır, yapma";
+    const karar = async (k_) => {
+      evet.disabled = hayir.disabled = true;
+      try {
+        const r = await api("/api/kritik", { jeton: o.jeton, karar: k_ }), j = await r.json();
+        dg.textContent = r.ok ? (k_ === "evet" ? "✔ " : "✖ ") + j.metin : "Olmadı: " + (j.hata || r.status);
+        if (r.ok && k_ === "evet") { OFIS_AI.gunluk(`${ad} için kritik iş onaylandı: ${o.neden}`); const devam = "Onayladım, eminim. Kilide takılan işi birebir aynı haliyle şimdi yap.";
+          if (!sure && id === aktif) { giris.value = devam; sor(); } else bilgi(id, `Devam etmesi için ${ad}'a "onayladım" yaz (10 dk içinde).`); }
+      } catch (e) { dg.textContent = "Sunucuya ulaşılamadı."; }
+    };
+    evet.onclick = () => karar("evet"); hayir.onclick = () => karar("hayir");
+    dg.append(evet, hayir); bas.append(ne); k.append(bas, on, dg); kutu(id).append(k); asagi();
+  }
+
   async function sor() {
     const soru = giris.value.trim(), id = aktif, ad = AJANLAR[id].ad; if (!soru || sure) return;
     if (!ANAHTAR) return bilgi(id, "Gerçek sohbet yalnız masaüstündeki Ofis kısayoluyla açınca çalışır.", "uyari");
@@ -130,7 +152,8 @@
       konusma[id].oturum = bitti.oturum || konusma[id].oturum;
       if (!balon) balon = mesaj(id, id, ""); balon.innerHTML = bicimle(bitti.metin || metin || "(boş cevap)");
       (bitti.oneriler || []).forEach((o) => oneriKart(id, o));
-      const oneri = (bitti.oneriler || []).some((o) => o.jeton);
+      (bitti.kritik || []).forEach((o) => kritikKart(id, o));
+      const oneri = (bitti.oneriler || []).some((o) => o.jeton) || (bitti.kritik || []).length > 0;
       if (oneri) anim(1, 1000);
       OFIS_AI.bitti(id, oneri);
       if (window.OFIS_SES_AJAN) OFIS_SES_AJAN.cevap(id, bitti.metin || metin);   // "gerçek cevapları sesli oku" açıksa ilk ~3 cümle (moduller/konusma-ses.js)

@@ -69,16 +69,18 @@
   }
   // ---------- İkinci beyin anahtarları (sunucu: ofis.pyw > /api/ayar-sunucu): Haiku katmanı ve konuşma kaydı; ikisi de varsayılan KAPALI ----------
   function sunucuKur() {
-    const ic = I(), bolum = el("sunucuBolum"), p = el("s_panel"), k = el("s_kayit"), pn = el("s_panel_not");
+    const ic = I(), bolum = el("sunucuBolum"), p = el("s_panel"), k = el("s_kayit"), pn = el("s_panel_not"), t = el("s_tam"), tt = el("s_tam_tablet");
     if (!bolum || !ic.ANAHTAR) return;
     const api = (g) => fetch("/api/ayar-sunucu", { method: g ? "POST" : "GET", headers: { "X-Ofis-Anahtar": ic.ANAHTAR, ...(g ? { "Content-Type": "application/json" } : {}) }, body: g ? JSON.stringify(g) : undefined });
     const yaz = (d) => {
-      bolum.hidden = false; p.checked = !!d.panel; k.checked = !!d.kayit; p.disabled = !d.panel_var || !d.claude;
+      bolum.hidden = false; p.checked = !!d.panel; k.checked = !!d.kayit; if (t) { t.checked = !!d.tam; t.disabled = !d.claude; } if (tt) { tt.checked = !!d.tam_tablet; tt.disabled = !d.claude; } p.disabled = !d.panel_var || !d.claude;
       if (!d.claude) pn.textContent = "Claude Code bulunamadı: Haiku katmanı kullanılamaz.";
     };
     const yenile = async () => { try { const r = await api(); if (r.ok) yaz(await r.json()); else bolum.hidden = true; } catch (e) { /* sunucu yok */ } };
     const gonder = (g, kutu) => async () => { try { const r = await api(g()); if (r.ok) { yaz(await r.json()); if (window.OFIS_PANEL) window.OFIS_PANEL.cek(); } else kutu.checked = !kutu.checked; } catch (e) { kutu.checked = !kutu.checked; } };
     p.onchange = gonder(() => ({ panel: p.checked }), p); k.onchange = gonder(() => ({ kayit: k.checked }), k);
+    if (t) t.onchange = () => { if (t.checked && !confirm("Tam yetenek: çalışanlar bu bilgisayarda komut çalıştırabilir ve vault dosyalarını değiştirebilir. Açılsın mı?")) { t.checked = false; return; } gonder(() => ({ tam: t.checked }), t)(); };
+    if (tt) tt.onchange = () => { if (tt.checked && !confirm("Tabletten de tam yetenek: PIN'i bilen herkes bu bilgisayarda komut çalıştırabilir ve dosyaları değiştirebilir. Açılsın mı?")) { tt.checked = false; return; } gonder(() => ({ tam_tablet: tt.checked }), tt)(); };
     new MutationObserver(() => { if (!el("ayarPanel").hidden) yenile(); }).observe(el("ayarPanel"), { attributes: true, attributeFilter: ["hidden"] });
     yenile();
   }
