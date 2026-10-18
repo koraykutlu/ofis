@@ -94,7 +94,7 @@
 
   // ---------- görünüm ----------
   const CSS = `
-  #bos { position:absolute; inset:0; z-index:30; display:flex; align-items:center; justify-content:center; background:rgba(6,7,10,.62); backdrop-filter:blur(1.5px); }
+  #bos { position:absolute; inset:5% 7% 10%; z-index:30; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:12px; border:2px solid rgba(255,255,255,.12); background:rgba(6,7,10,.62); box-shadow:0 14px 44px rgba(0,0,0,.65); }   /* ekranı kaplamaz: ortada açılır, ofis çevresinde görünür */
   #bos[hidden], #bos [hidden] { display:none !important; }
   /* tema değişkenleri: koyu (varsayılan) / açık; "otomatik" ofisin saatine göre seçer (gorunumUygula) */
   #bos { --os-yazi:#eceef5; --os-soluk:#9aa0b4; --os-p:#cfd1da; --os-vy:var(--vurgu); --os-kenar:#3a3f53; --os-kart:rgba(18,20,30,.7); --os-oge:rgba(31,35,51,.92); --os-oge-kenar:#343a50;
