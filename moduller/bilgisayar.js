@@ -11,6 +11,8 @@
 // Odak (pomodoro istatistiği: etkilesim.js > window.OFIS_ODAK). Sürprizler: masaüstünde soluk "çok gizli" klasörü (şifreli), 02:00-05:00 arası açınca
 // Ada uyumanı söyler ve ekran koruyucu erken gelir (boşta: gece 25 sn, gündüz 3 dk), bilgisayar açıkken Sütlaç ara sıra klavyene çıkıp yazar.
 // Tuşlar: E masada aç, Ctrl+Space ara, Esc aramayı / öndeki pencereyi / bilgisayarı kapat. Ziyaretteyken (uzak) ve sunucusuz açılışta gerçek veri yoktur.
+// Telefon (GTA tarzı): telefon tuşu (Ayarlar > Telefon tuşu, varsayılan P) ofisin her yerinden aynı uygulamaları dikey bir telefonda açar. Sağ altta yukarı kayar, ofis kararmaz,
+// oyuncu telefon açıkken yürümeye devam eder (yön tuşları / WASD). Üst çubukta saat ve bulunduğun oda (konum), altta ana ekran çizgisi (uygulamadan çık / telefonu kapat).
 (() => {
   const I = () => window.OFIS_IC;
   const ANAHTAR = (document.querySelector('meta[name="ofis-anahtar"]') || {}).content || "";
@@ -28,6 +30,8 @@
   const DURUM_AD = { active: "sürüyor", doing: "sürüyor", inbox: "gelen", todo: "yapılacak", waiting: "bekliyor", blocked: "takıldı", aktif: "aktif", taslak: "taslak" };
 
   let acik = false, veri = null, uygulama = null, acilisGosterildi = false, ayar = { dogrudan: false }, saatZ = 0;
+  let cihaz = "pc", telTus = "KeyP", konumZ = 0;   // cihaz: "pc" (masadaki bilgisayar) ya da "telefon"; telTus: Ayarlar > Telefon tuşu (e.code)
+  const YURU = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "KeyW", "KeyA", "KeyS", "KeyD", "KeyZ"]);   // telefon açıkken oyuna geçen tuşlar
   const mesajlar = {};   // ajan id -> { oturum, liste: [{kim, metin, kayitlar}], okunmadi }
   let aktifKisi = "ada", sure = null;
   const DEPO_GORUNUM = "ofis-bilgisayar-gorunum-1";
@@ -310,7 +314,55 @@
     #bos .bos-cubuk .saat small { display:none; }
     #bos .mesaj-duzen { grid-template-columns:1fr; grid-template-rows:auto 1fr; } #bos .kisiler { flex-direction:row; overflow-x:auto; border-right:0; border-bottom:1px solid var(--os-kenar); padding:0 0 6px; }
     #bos .kisi .k-rol { display:none; } #bos .kisi .k-ad { white-space:nowrap; }
-  }`;
+  }
+  /* telefon (GTA tarzı): sağ altta yukarı kayan dikey cihaz; ofis kararmaz, tıklamalar telefonun dışında oyuna geçer */
+  #bos .tel-ust, #bos .tel-ev, #bos .bos-pb .geri, #bos .w-konum { display:none; }
+  #bos[data-cihaz="telefon"] { background:none; pointer-events:none; padding:0; }
+  #bos[data-cihaz="telefon"] .bos-ekran { pointer-events:auto; position:absolute; right:max(16px, 3cqw); bottom:max(12px, 3cqh); aspect-ratio:9 / 19;
+    width:min(330px, calc((100cqh - 24px) * 9 / 19), calc(100cqw - 32px)); padding:9px 7px; border-radius:40px; border:3px solid #0a0b0f;
+    background:linear-gradient(155deg, #3a3e4d, #1d2029 38%, #121419); box-shadow:0 0 0 2px #3c4152 inset, 0 0 0 1px color-mix(in srgb, var(--vurgu) 40%, transparent), 0 26px 60px rgba(0,0,0,.62);
+    transform-origin:50% 100%; }
+  #bos[data-cihaz="telefon"] .bos-ekran::before { content:""; position:absolute; right:-6px; top:22%; width:3px; height:13%; border-radius:2px; background:#2b2e3a; }   /* yan tuş */
+  #bos[data-cihaz="telefon"].giris .bos-ekran { animation:telGir .34s cubic-bezier(.2,.9,.25,1.08) both; } #bos[data-cihaz="telefon"].cikis .bos-ekran { animation:telCik .24s ease-in both; }
+  @keyframes telGir { from { transform:translateY(118%) rotate(5deg); } to { transform:none; } }
+  @keyframes telCik { to { transform:translateY(118%) rotate(5deg); } }
+  #bos[data-cihaz="telefon"] .bos-cam { border-radius:32px; border:0; }
+  #bos[data-cihaz="telefon"] .bos-alt, #bos[data-cihaz="telefon"] .bos-cubuk, #bos[data-cihaz="telefon"] .bos-tarama { display:none; }
+  #bos[data-cihaz="telefon"] .tel-ust { display:flex; position:absolute; top:0; left:0; right:0; height:32px; align-items:center; gap:6px; padding:0 20px; z-index:950; pointer-events:none;
+    font:600 12px "Pixelify Sans", system-ui; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.55); }
+  #bos[data-cihaz="telefon"]:not([data-duvar="gok"]) .tel-ust, #bos[data-cihaz="telefon"].tel-uyg .tel-ust { color:var(--os-yazi); text-shadow:none; }
+  #bos[data-cihaz="telefon"].tel-uyg .tel-ust { background:var(--os-pb); }
+  #bos .tel-ust .ada { position:absolute; left:50%; top:7px; width:74px; height:20px; margin-left:-37px; border-radius:12px; background:#05060a; box-shadow:0 0 0 1px rgba(255,255,255,.06); }
+  #bos .tel-ust .ada::after { content:""; position:absolute; right:9px; top:7px; width:6px; height:6px; border-radius:50%; background:#1b2340; box-shadow:0 0 0 1px #2a3352; }
+  #bos .tel-ust .sag { margin-left:auto; display:flex; align-items:center; justify-content:flex-end; gap:5px; min-width:0; max-width:calc(50% - 46px); }   /* çentiğe taşmaz */
+  #bos .tel-ust .yer { flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:500; opacity:.92; }
+  #bos .tel-ust .pil { width:20px; height:10px; border:1.5px solid currentColor; border-radius:3px; position:relative; box-sizing:border-box; }
+  #bos .tel-ust .pil::before { content:""; position:absolute; left:1px; top:1px; bottom:1px; width:72%; border-radius:1px; background:var(--vurgu); }
+  #bos .tel-ust .pil::after { content:""; position:absolute; right:-4px; top:2px; width:2px; height:4px; border-radius:0 1px 1px 0; background:currentColor; }
+  #bos[data-cihaz="telefon"] .tel-ev { display:block; position:absolute; left:50%; bottom:0; width:140px; height:22px; margin-left:-70px; z-index:960; border:0; padding:0; background:none; cursor:pointer; }
+  #bos .tel-ev::after { content:""; position:absolute; left:20px; right:20px; bottom:7px; height:5px; border-radius:3px; background:rgba(255,255,255,.82); box-shadow:0 0 4px rgba(0,0,0,.35); }
+  #bos[data-cihaz="telefon"][data-tema="acik"].tel-uyg .tel-ev::after { background:rgba(20,24,36,.7); }
+  #bos[data-cihaz="telefon"] .bos-masa { grid-template-columns:1fr; grid-template-rows:auto 1fr; gap:14px; padding:40px 14px 30px; overflow-y:auto; scrollbar-width:none; }
+  #bos[data-cihaz="telefon"] .bos-yan { display:flex; order:-1; overflow:visible; gap:8px; }
+  #bos[data-cihaz="telefon"] .bos-yan > :not(.w-saat):not(.w-konum) { display:none; }
+  #bos[data-cihaz="telefon"] .w-saat { background:none; border:0; box-shadow:none; backdrop-filter:none; text-align:center; padding:6px 0 0; }
+  #bos[data-cihaz="telefon"] .w-saat .s { font-size:52px; } #bos[data-cihaz="telefon"][data-duvar="gok"] .w-saat { color:#fff; text-shadow:0 2px 8px rgba(0,0,0,.4); }
+  #bos[data-cihaz="telefon"][data-duvar="gok"] .w-saat .t { color:rgba(255,255,255,.88); }
+  #bos[data-cihaz="telefon"] .w-konum { display:flex; align-self:center; align-items:center; gap:6px; padding:5px 12px; border-radius:16px; font-size:12px; }
+  #bos .w-konum b { color:var(--os-vy); font-weight:600; }
+  #bos[data-cihaz="telefon"] .bos-simgeler { grid-template-columns:repeat(4, 1fr); grid-auto-rows:auto; gap:14px 2px; }
+  #bos[data-cihaz="telefon"] .bos-simge { gap:5px; padding:2px 0; font-size:10.5px; text-align:center; line-height:1.15; }
+  #bos[data-cihaz="telefon"] .bos-simge .i { width:46px; height:46px; border-radius:14px; font-size:24px; }
+  #bos[data-cihaz="telefon"] .rozet-say { right:6px; }
+  #bos[data-cihaz="telefon"] .bos-pencere { inset:32px 0 0 0 !important; width:auto !important; height:auto !important; min-width:0; min-height:0; border-radius:0; border:0; box-shadow:none;
+    padding-bottom:20px; animation:telUyg .2s ease-out both; }
+  @keyframes telUyg { from { transform:scale(.92); opacity:0; } }
+  #bos[data-cihaz="telefon"] .bos-pb { cursor:default; padding:0 8px 0 4px; }
+  #bos[data-cihaz="telefon"] .bos-pb .geri { display:block; font-size:22px; color:var(--os-vy); }
+  #bos[data-cihaz="telefon"] .bos-pb .kuc, #bos[data-cihaz="telefon"] .bos-pb .buy, #bos[data-cihaz="telefon"] .bos-pb .kapat { display:none; }
+  #bos[data-cihaz="telefon"] .bos-bildirimler { top:36px; }
+  #bos[data-cihaz="telefon"] .cc .cc-kenar { display:none; position:absolute; left:0; top:0; bottom:0; z-index:2; background:var(--os-pencere); }
+  #bos[data-cihaz="telefon"] .cc.kenar-acik .cc-kenar { display:flex; } #bos[data-cihaz="telefon"] .cc .cc-kenarduge { display:inline-block; }`;
 
   // ---------- görünüm ayarları: tema, yazı, duvar kâğıdı ("otomatik" tema ve gök ofisin saatine göre) ----------
   const TEMA_SIRA = ["oto", "acik", "koyu"], TEMA_AD = { oto: "Otomatik (ofis saati)", acik: "Açık", koyu: "Koyu" }, TEMA_IKON = { oto: "🌓", acik: "☀️", koyu: "🌙" };
@@ -325,7 +377,7 @@
   }
   function gorunumAyarla(k, v) { gorunum[k] = v; gorunumKaydet(); gorunumUygula(); if (acik) { masaustuCiz(); if (pencereler.has("ayarlar")) icerikCiz("ayarlar"); } }
 
-  let kok, cam, acilisEl, masa, simgelerEl, yanEl, cubuk, saatEl, saatWidget, araEl, araGiris, araListe, bildirimEl, merkezEl;
+  let kok, cam, acilisEl, masa, simgelerEl, yanEl, cubuk, saatEl, saatWidget, araEl, araGiris, araListe, bildirimEl, merkezEl, telSaatEl, telYerEl;
   function kur() {
     const sahne = document.querySelector(".sahne"); if (!sahne || document.getElementById("bos")) return;
     const st = document.createElement("style"); st.textContent = CSS; document.head.appendChild(st);
@@ -336,7 +388,10 @@
     cubuk = yap("div", "bos-cubuk"); cubuk.hidden = true;
     bildirimEl = yap("div", "bos-bildirimler"); merkezEl = yap("div", "bos-merkez"); merkezEl.hidden = true;
     araKur();
-    cam.append(acilisEl, masa, cubuk, merkezEl, araEl, bildirimEl, yap("div", "bos-tarama"));
+    const telUst = yap("div", "tel-ust"); telSaatEl = yap("span", "s"); telYerEl = yap("span", "yer");
+    const telSag = yap("span", "sag"); telSag.append(telYerEl, yap("span", "", "▂▄▆"), yap("span", "pil")); telUst.append(telSaatEl, yap("span", "ada"), telSag);
+    const telEv = dugme("", () => telEve(), "tel-ev"); telEv.title = "Ana ekran · ana ekrandayken telefonu kapat"; telEv.setAttribute("aria-label", "Ana ekran");
+    cam.append(acilisEl, masa, cubuk, merkezEl, araEl, bildirimEl, yap("div", "bos-tarama"), telUst, telEv);
     const alt = yap("div", "bos-alt"); alt.append(yap("span", "led"), yap("span", "", "BEYİN-OS"), yap("span", "bosluk"), yap("span", "", "Ctrl+Space: ara · Esc: kapat"));
     ekran.append(cam, alt); kok.append(ekran); sahne.appendChild(kok); gorunumUygula();
     kok.addEventListener("pointerdown", (e) => {
@@ -427,7 +482,8 @@
     const odak = yap("div", "kart w-odak"); odak.append(yap("span", "", "⏱️ Odak"), dugme("25 dk başlat", () => kapat(() => { const ic = I(); if (ic && ic.MOD) ic.MOD("odakBaslat"); }), "k-dugme"));
     const roz = yap("div", "kart"), rl = yap("div", "rozetler"); roz.append(yap("h4", "", "ROZETLER"), rl);
     for (const r of rozetler()) rl.append(yap("span", "rozet" + (r.var ? "" : " kilit"), r.ad));
-    yanEl.replaceChildren(saat, profil, sira, gorev, odak, roz);
+    const konum = yap("div", "kart w-konum"); konum.append(yap("span", "", "📍"), yap("b", "", odaAdi()));
+    yanEl.replaceChildren(saat, konum, profil, sira, gorev, odak, roz);
     cubukCiz();
   }
   // Dock: başlat/ara, uygulamalar (açık: nokta, öndeki: çizgi), tema, bildirimler, saat, kapat
@@ -461,9 +517,10 @@
   const icAl = (id) => { const p = pencereler.get(id); return p && !p.kucuk ? p.ic : null; };
   function pencereYap(id) {
     const u = UAD(id), el = yap("div", "bos-pencere"), pb = yap("div", "bos-pb"), ic_ = yap("div", "bos-ic");
-    const yen = dugme("⟳", () => yenile(true)), kuc = dugme("–", () => kucult(id)), buy = dugme("▢", () => buyut(id)), kap = dugme("✕", () => pencereKapat(id), "kapat");
+    const yen = dugme("⟳", () => yenile(true)), kuc = dugme("–", () => kucult(id), "kuc"), buy = dugme("▢", () => buyut(id), "buy"), kap = dugme("✕", () => pencereKapat(id), "kapat");
+    const geri = dugme("‹", () => pencereKapat(id), "geri"); geri.title = "Geri (Esc)";
     yen.title = "Verileri yenile"; kuc.title = "Küçült"; buy.title = "Büyüt / eski boyut (başlığa çift tıkla)"; kap.title = "Kapat (Esc)";
-    pb.append(yap("span", "pi", u.ikon), yap("b", "", u.ad), yap("span", "bosluk"), yen, kuc, buy, kap);
+    pb.append(geri, yap("span", "pi", u.ikon), yap("b", "", u.ad), yap("span", "bosluk"), yen, kuc, buy, kap);
     el.append(pb, ic_); el.dataset.u = id;
     el.addEventListener("pointerdown", () => odakla(id), true);
     pb.addEventListener("dblclick", (e) => { if (!e.target.closest("button")) buyut(id); });
@@ -498,6 +555,7 @@
     p.el.style.zIndex = ++zSira;
     const degisti = uygulama !== id; uygulama = id;
     for (const [k, x] of pencereler) x.el.classList.toggle("odak", k === id);
+    telUygYaz();
     if (degisti) cubukCiz();
   }
   function ondeki() { let en = null, z = -1; for (const [k, p] of pencereler) if (!p.kucuk && (+p.el.style.zIndex || 0) > z) { en = k; z = +p.el.style.zIndex || 0; } return en; }
@@ -510,13 +568,13 @@
     if (yeni || id === "mesajlar") icerikCiz(id);
     masaustuCiz();
   }
-  function kucult(id) { const p = pencereler.get(id); if (!p) return; p.kucuk = true; p.el.classList.add("kucuk"); if (uygulama === id) { uygulama = null; const o = ondeki(); if (o) odakla(o); } cubukCiz(); }
+  function kucult(id) { const p = pencereler.get(id); if (!p) return; p.kucuk = true; p.el.classList.add("kucuk"); if (uygulama === id) { uygulama = null; const o = ondeki(); if (o) odakla(o); } telUygYaz(); cubukCiz(); }
   function buyut(id) { const p = pencereler.get(id); if (!p) return; p.buyuk = !p.buyuk; p.el.classList.toggle("max", p.buyuk); }
   function pencereKapat(id = uygulama) {
     const p = pencereler.get(id); if (!p) return;
     p.el.remove(); pencereler.delete(id);
     if (uygulama === id) { uygulama = null; const o = ondeki(); if (o) odakla(o); }
-    masaustuCiz();
+    telUygYaz(); masaustuCiz();
   }
   function bosMesaj(metin, kod) { const d = yap("div", "bos-bos", metin); if (kod) { d.append(document.createElement("br")); d.append(yap("code", "", kod)); } return d; }
   const sunucusuz = () => bosMesaj("Gerçek veri yalnız masaüstündeki Ofis kısayoluyla açınca görünür.");
@@ -1259,34 +1317,60 @@
     if (!isFinite(x) || !isFinite(y) || !sr.width) return;
     kok.firstChild.style.setProperty("--bx", (x - ek_.left) + "px"); kok.firstChild.style.setProperty("--by", (y - ek_.top) + "px");
   }
-  async function ac() {
-    if (acik || document.body.classList.contains("uzak")) return;
+  async function ac(c = "pc") {
+    if (document.body.classList.contains("uzak")) return;
+    if (acik) { if (cihaz !== c && !kok.classList.contains("cikis")) kapat(() => ac(c)); return; }   // telefondan masadaki bilgisayara (ya da tersi) geçiş
     const ic = I(); if (!ic || (ic.diyalogAcik && ic.diyalogAcik())) return;
-    acik = true; ic.tuslar.clear();
-    const o = ic.oyuncu; o.yol = []; o.sonra = null; ic.yonBak(o, { x: MASA[0], y: MASA[1] - 2 }); o.yazSon = ic.zaman + 1e6;   // klavyede yazıyor
-    kok.hidden = false; kok.classList.remove("cikis"); kaynakNokta(); kok.classList.add("giris");
-    sesAcilis(); I().ses("tak");
+    acik = true; cihaz = c; kok.dataset.cihaz = c;
+    if (c === "pc") {
+      ic.tuslar.clear();
+      const o = ic.oyuncu; o.yol = []; o.sonra = null; ic.yonBak(o, { x: MASA[0], y: MASA[1] - 2 }); o.yazSon = ic.zaman + 1e6;   // klavyede yazıyor
+    }
+    kok.hidden = false; kok.classList.remove("cikis"); if (c === "pc") kaynakNokta(); kok.classList.add("giris");
+    if (c === "pc") { sesAcilis(); I().ses("tak"); } else sesTelefon();
     const veriSoz = yenile(false);
-    if (!acilisGosterildi) await veriSoz;
-    await acilisOynat(acilisGosterildi); acilisGosterildi = true;
+    if (c === "pc") { if (!acilisGosterildi) await veriSoz; await acilisOynat(acilisGosterildi); acilisGosterildi = true; }
+    else { acilisEl.hidden = true; telDurumYaz(); clearInterval(konumZ); konumZ = setInterval(telDurumYaz, 700); }
     if (!acik) return;
     masa.hidden = false; cubuk.hidden = false; gorunumUygula(); masaustuCiz(); saatYaz(); clearInterval(saatZ); saatZ = setInterval(saatYaz, 15000);
     if (uygulama && !pencereler.has(uygulama)) uygulamaAc(uygulama);
-    geceKontrol(); hareketVar(); clearInterval(koruyucuZ); koruyucuZ = setInterval(() => { koruyucuDenetle(); patiDenetle(); }, 1000);
+    if (c === "pc") { geceKontrol(); hareketVar(); clearInterval(koruyucuZ); koruyucuZ = setInterval(() => { koruyucuDenetle(); patiDenetle(); }, 1000); }
+    telUygYaz();
     if (!ilkBildirim && veri) {   // açılışta bir kez: geciken iş ve posta
       ilkBildirim = true; const s = S();
       if (s.gecikti) setTimeout(() => bildir("⚠️", "Geciken iş", `${s.gecikti} iş son tarihini geçti.`, () => { isFiltre = "hepsi"; uygulamaAc("isler"); icerikCiz("isler"); }), 700);
       if (veri.posta && veri.posta.var && s.posta) setTimeout(() => bildir("✉️", "Posta", `${s.posta} madde seni bekliyor.`, () => uygulamaAc("posta")), 1600);
     }
-    (simgelerEl.firstChild || kok).focus && (simgelerEl.firstChild || kok).focus();
+    if (c === "pc") (simgelerEl.firstChild || kok).focus && (simgelerEl.firstChild || kok).focus();   // telefonda odak oyunda kalır: yürümek için
   }
   function kapat(sonraFn) {
     if (!acik) return;
-    acik = false; clearInterval(saatZ); clearInterval(koruyucuZ); if (acilisBitir) acilisBitir(); araKapat(); if (merkezEl) merkezEl.hidden = true; ekranKoruyucu(false); patiBitir(true);
+    acik = false; clearInterval(saatZ); clearInterval(koruyucuZ); clearInterval(konumZ); if (acilisBitir) acilisBitir(); araKapat(); if (merkezEl) merkezEl.hidden = true; ekranKoruyucu(false); patiBitir(true);
     const ic = I(); if (ic && ic.oyuncu) ic.oyuncu.yazSon = 0;
-    sesKapanis(); kok.classList.remove("giris"); kok.classList.add("cikis");
-    setTimeout(() => { kok.hidden = true; kok.classList.remove("cikis"); if (ic && ic.cv) ic.cv.focus(); if (sonraFn) sonraFn(); }, 330);
+    if (cihaz === "pc") sesKapanis(); else ton([1175, 880], "sine", 0.05, 0.035);
+    kok.classList.remove("giris"); kok.classList.add("cikis");
+    setTimeout(() => { kok.hidden = true; kok.classList.remove("cikis"); if (ic && ic.cv) ic.cv.focus(); if (sonraFn) sonraFn(); }, cihaz === "pc" ? 330 : 250);
   }
+  // ---------- telefon: durum çubuğu (saat, konum), ana ekran çizgisi ----------
+  const sesTelefon = () => ton([988, 1319, 1760], "sine", 0.06, 0.04);
+  function odaAdi() {
+    const ic = I(), o = ic && ic.oyuncu; if (!o || !ic.odaKaro) return "Ofis";
+    const oda = ic.ODALAR && ic.ODALAR[ic.odaKaro(o.x, o.y)];
+    const ad = (oda && (oda.ad || oda.id)) || "Koridor";
+    return ad.toLocaleLowerCase("tr-TR").replace(/(^|\s)(\S)/g, (m, b, h) => b + h.toLocaleUpperCase("tr-TR"));   // "YÖNETİM" -> "Yönetim"
+  }
+  function telDurumYaz() {
+    if (!acik || cihaz !== "telefon" || !telSaatEl) return;
+    telSaatEl.textContent = new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+    const yer = odaAdi(); if (telYerEl.textContent !== yer) { telYerEl.textContent = yer; telYerEl.title = "Konum: " + yer; const k = yanEl && yanEl.querySelector(".w-konum b"); if (k) k.textContent = yer; }
+  }
+  function telUygYaz() { if (kok) kok.classList.toggle("tel-uyg", !!(uygulama && pencereler.has(uygulama) && !pencereler.get(uygulama).kucuk)); }
+  function telEve() {   // ana ekran çizgisi: arama/bildirim menüsü açıksa kapatır, sonra öndeki uygulamayı, ana ekrandaysa telefonu
+    if (!araEl.hidden) return araKapat();
+    if (!merkezEl.hidden) { merkezEl.hidden = true; return; }
+    const o = ondeki(); if (o) pencereKapat(o); else kapat();
+  }
+  function telefonAcKapa() { if (acik && cihaz === "telefon") kapat(); else if (!acik) ac("telefon"); }
   // Masaya git, sonra aç (E noktası masanın önünde; oyuncu sandalyeye geçer)
   function masayaGecVeAc() {
     const ic = I(), o = ic.oyuncu;
@@ -1300,15 +1384,23 @@
       I().NESNELER.push({ x: MASA[0], y: MASA[1], r: 1.35, etiket: () => "💻 Bilgisayarı aç", fn: masayaGecVeAc, oturunca: true, oncelik: 0.6 });
       I().NESNELER.push({ x: MASA[0], y: MASA[1] - 2, r: 1.1, etiket: () => "💻 Bilgisayarı aç", fn: masayaGecVeAc, oturunca: true, oncelik: 0.8 });   // kendi koltuğunda (masanın arkası): "Otur" yerine bilgisayar   // oturunca "Kalk" yerine bu öner (kalkmak için yürü)
       if (ANAHTAR) { yenile(false); setInterval(() => { if (!acik) yenile(false); }, 5 * 60000); }
+      const td = document.getElementById("telefonDugme"); if (td) td.onclick = (e) => { e.stopPropagation(); telefonAcKapa(); td.blur(); };   // dokunmatik / fare için
     },
     tus(e) {
-      if (!acik) return undefined;
+      const telTusu = e.code === telTus && !e.ctrlKey && !e.metaKey && !e.altKey;
+      if (!acik) { if (telTusu && !e.repeat && !document.body.classList.contains("uzak")) { e.preventDefault(); ac("telefon"); return true; } return undefined; }
+      if (cihaz === "telefon") {
+        if (telTusu) { e.preventDefault(); if (!e.repeat) kapat(); return true; }
+        if (tusIsle(e)) { e.preventDefault(); return true; }
+        return YURU.has(e.code) ? undefined : true;   // GTA gibi: telefon açıkken yürünür (yön tuşları / WASD, Z kamera); diğer oyun tuşları kapalı
+      }
       if (tusIsle(e)) e.preventDefault();
       return true;   // bilgisayar açıkken oyun tuşları çalışmaz
     },
+    ayarUygulandi(a) { if (a && typeof a.telefon === "string") telTus = a.telefon; const k = document.getElementById("telefonTusu"); if (k) k.textContent = telTus.replace(/^Key/, ""); },
     test: {
-      bilgisayar: () => ({ acik, uygulama, pencereler: [...pencereler.keys()], gorunum: { ...gorunum, tema_etkin: kok && kok.dataset.tema, gok: kok && kok.dataset.gok }, bildirim: bildirimler.length, veri: !!veri, sayilar: S(), ayar: { ...ayar }, seviye: seviye(), mesaj: Object.fromEntries(Object.entries(mesajlar).map(([k, v]) => [k, v.liste.length])), sure }),
-      bilgisayarAc: () => ac(), bilgisayarKapat: () => kapat(), bilgisayarUyg: (id) => uygulamaAc(id), bilgisayarYenile: () => yenile(true),
+      bilgisayar: () => ({ acik, cihaz, telTus, uygulama, pencereler: [...pencereler.keys()], gorunum: { ...gorunum, tema_etkin: kok && kok.dataset.tema, gok: kok && kok.dataset.gok }, bildirim: bildirimler.length, veri: !!veri, sayilar: S(), ayar: { ...ayar }, seviye: seviye(), mesaj: Object.fromEntries(Object.entries(mesajlar).map(([k, v]) => [k, v.liste.length])), sure }),
+      bilgisayarAc: () => ac(), bilgisayarKapat: () => kapat(), telefonAc: () => ac("telefon"), bilgisayarUyg: (id) => uygulamaAc(id), bilgisayarYenile: () => yenile(true),
       bilgisayarAra: (q) => { araAc(q || ""); return araSonuc.map((s) => s.grup + ": " + s.baslik); }, bilgisayarGorunum: (k, v) => gorunumAyarla(k, v),
       bilgisayarBildir: (b, m) => bildir("🔔", b || "Deneme", m || ""),
       bilgisayarKoruyucu: (a) => ekranKoruyucu(a !== false), bilgisayarPati: () => I().MOD("kediOyuncuKlavye", MASA), bilgisayarGece: () => { try { localStorage.removeItem("ofis-gece-uyari-" + new Date().toDateString()); } catch (e) { /* yok */ } const h = Date.prototype.getHours; Date.prototype.getHours = () => 3; try { geceKontrol(); } finally { Date.prototype.getHours = h; } },
@@ -1316,6 +1408,6 @@
       bilgisayarMesaj: (ajan, metin) => { aktifKisi = AJANLAR[ajan] ? ajan : "ada"; return gonderMesaj(metin); },
     },
   };
-  window.OFIS_BILGISAYAR = { ac: () => masayaGecVeAc(), kapat: () => kapat(), acik: () => acik, uygulama: (id) => { if (!acik) { uygulama = id; masayaGecVeAc(); } else uygulamaAc(id); } };
+  window.OFIS_BILGISAYAR = { ac: () => masayaGecVeAc(), telefon: () => telefonAcKapa(), kapat: () => kapat(), acik: () => acik, cihaz: () => cihaz, uygulama: (id) => { if (!acik) { uygulama = id; masayaGecVeAc(); } else uygulamaAc(id); } };
   (window.OFIS_MODULLER = window.OFIS_MODULLER || []).push(MODUL);
 })();

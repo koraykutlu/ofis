@@ -382,6 +382,7 @@
   <button id="ses">🔇 Sesi aç</button>
   <button id="kamera" class="secili">🎥 Yakın kamera</button>
   <button id="sohbetDugme">🧠 Beyne sor</button>
+  <button id="telefonDugme" title="Telefon: ofisin her yerinden BeyinOS uygulamaları (tuşu Ayarlar'dan seçilir)">📱 Telefon</button>
   <button id="panelDugme" aria-pressed="true" title="Sağdaki paneli aç/kapat">▤ Panel</button>
   <button id="tamDugme" hidden title="Tam ekran">⛶ Tam ekran</button>
   <button id="duzenDugme" aria-expanded="false" aria-controls="duzenPanel" hidden>🛠️ Düzenle</button>
@@ -397,6 +398,7 @@
   <label class="s"><span>Şömine sesi</span><input type="checkbox" id="a_somine"></label>
   <div class="s"><span>Görüntü kalitesi</span><div class="seg"><button data-ayar="kalite" data-v="yuksek">Yüksek</button><button data-ayar="kalite" data-v="dengeli">Dengeli</button><button data-ayar="kalite" data-v="hizli">Hızlı</button><button data-ayar="kalite" data-v="otomatik">Otomatik</button></div></div>
   <div class="s"><span>Yazı tipi</span><div class="seg"><button data-ayar="font" data-v="piksel">Piksel</button><button data-ayar="font" data-v="sistem">Sistem</button><button data-ayar="font" data-v="serif">Serif</button><button data-ayar="font" data-v="mono">Mono</button></div></div>
+  <div class="s"><span>Telefon tuşu</span><div class="seg"><button data-ayar="telefon" data-v="KeyP">P</button><button data-ayar="telefon" data-v="KeyQ">Q</button><button data-ayar="telefon" data-v="KeyF">F</button><button data-ayar="telefon" data-v="KeyG">G</button></div></div>
   <div class="s"><span>Yazı boyutu</span><div class="seg"><button data-ayar="yazi" data-v="kucuk">Küçük</button><button data-ayar="yazi" data-v="normal">Normal</button><button data-ayar="yazi" data-v="buyuk">Büyük</button></div></div>
   <label class="s"><span>Yürüme hızı</span><input type="range" id="a_yurume" min="50" max="200" step="10"><output id="o_yurume"></output></label>
   <label class="s"><span>Kamera yakınlığı</span><input type="range" id="a_kamera" min="120" max="320" step="10"><output id="o_kamera"></output></label>
@@ -482,7 +484,7 @@
     </div>
     <div id="kisiKart" class="cerceve" role="dialog" aria-label="Kişi kartı" hidden></div>
     <div id="odaKart" class="cerceve" role="dialog" aria-label="Oda kartı" hidden></div>
-    <div class="ipucu"><kbd>←↑↓→</kbd>/<kbd>WASD</kbd> yürü · <kbd>E</kbd> konuş · <kbd>1-4</kbd> seç · <kbd>Esc</kbd> kapat · <kbd>Z</kbd> kamera · <kbd>M</kbd> mini harita · haritaya tıkla: oraya git · ajana / oda tabelasına tıkla: kart · 🛠️ Düzenle: eşya yerleştir</div>
+    <div class="ipucu"><kbd>←↑↓→</kbd>/<kbd>WASD</kbd> yürü · <kbd>E</kbd> konuş · <kbd>1-4</kbd> seç · <kbd>Esc</kbd> kapat · <kbd>Z</kbd> kamera · <kbd>M</kbd> mini harita · <kbd id="telefonTusu">P</kbd> telefon · haritaya tıkla: oraya git · ajana / oda tabelasına tıkla: kart · 🛠️ Düzenle: eşya yerleştir</div>
   </div>
   <aside>
     <div class="kart" id="canliKart" hidden><h2>Bugün <span id="canliSay"></span></h2><ul id="canliListe"></ul><div id="canliAlt"></div></div>

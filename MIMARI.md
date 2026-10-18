@@ -427,6 +427,16 @@ bayat anlık görüntü, kalıcılık, bozuk dosya) ve iki pencereli başsız Ed
   %10 olasılıkla Sütlaç oyuncunun klavyesine çıkar (`MOD("kediOyuncuKlavye", masa)` → sutlac.js), "🐾 Sütlaç klavyenin üstünde" kartı anlamsız harfler yazar, öndeki pencerenin yazı alanına da ekler (göndermez); "Sev ve indir" ya da süre bitince iner.
 - Dışa: `window.OFIS_BILGISAYAR {ac, kapat, acik, uygulama(id)}`. Test: `__ofis.bilgisayar()`, `bilgisayarAc()`, `bilgisayarKapat()`, `bilgisayarUyg(id)`, `bilgisayarYenile()`, `bilgisayarAra(q)`, `bilgisayarGorunum(k, v)`, `bilgisayarBildir(b, m)`, `bilgisayarKoruyucu(acik)`, `bilgisayarPati()`, `bilgisayarGece()`, `bilgisayarTerminal(metin)`, `bilgisayarMesaj(ajan, metin)`.
 
+### Telefon (GTA tarzı; `moduller/bilgisayar.js`, 19 Ekim)
+- BeyinOS'un ikinci cihaz kipi (`cihaz = "pc" | "telefon"`, `#bos[data-cihaz]`): aynı uygulamalar ve veri, ayrı kod yok. Telefon tuşu (Ayarlar > Telefon tuşu: P varsayılan, Q, F, G; `ayar.telefon`, e.code;
+  T ziyaret sohbetinde kullanıldığı için seçenekte yok) ya da üst çubuktaki 📱 Telefon düğmesi ofisin her yerinden açar/kapatır. Ziyaretteyken (uzak) açılmaz.
+- Görünüm: sağ altta dikey 9:19 cihaz (en fazla 330 px genişlik, kısa pencerede orantılı küçülür), alttan yukarı kayarak gelir; ofis kararmaz, telefonun dışındaki tıklamalar oyuna geçer.
+  Üst çubuk: saat, çentik, bulunduğun oda (`ODALAR[odaKaro(oyuncu)]`, 0,7 sn'de bir), sinyal, pil. Ana ekran: büyük saat, 📍 konum çipi, 4 sütun simge. Uygulamalar tam ekran açılır,
+  başlıkta ‹ geri; alttaki ana ekran çizgisi öndeki uygulamayı, ana ekrandaysa telefonu kapatır. Claude Code'un oturum listesi telefonda üst katmandır (☰).
+- Tuşlar: telefon açıkken yön tuşları / WASD ve Z oyuna geçer (yürünür), diğer oyun tuşları kapalı; Esc öndeki uygulamayı, sonra telefonu kapatır. Telefon açıkken masadaki bilgisayar
+  istenirse telefon kapanıp bilgisayar açılır. Açılış BIOS'u, ekran koruyucu, gece uyarısı ve Sütlaç-klavye sürprizi yalnız masadaki bilgisayarda.
+- Dışa: `OFIS_BILGISAYAR.telefon()` (aç/kapat), `cihaz()`. Test: `telefonAc()`, `__ofis.bilgisayar().cihaz / telTus`.
+
 ## Ortam sohbetleri (`sohbetler.js`, `moduller/sohbet-ortam.js`; 18 Ekim gecesi, paket C)
 - `sohbetler.js` `window.SOHBETLER`: 87 çok satırlı (4-8 satır, ≤ 90 karakter) kurgusal sohbet; alanlar dosya başında: `yer` (sebil, kahve, mutfak, toplanti, komsu), `dilim` (sabah/ogle/aksam/gece),
   `a b c` rol yuvaları (ajan id listesi), `iliski` (arkadas | rekabet = `iliskiler.gerilim`), `etiket`, `ruh`, satırlar `"a: metin"`. Yer tutucular `{a} {b} {c} {kedi} {saat}` (+ek: `{kedi:a}`) ve KISI'nin `{oyuncu} {asistan} {ajan.id:ek}`.
