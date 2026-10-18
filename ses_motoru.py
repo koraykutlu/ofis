@@ -123,6 +123,9 @@ class Ses:
         self.yukleniyor, self.hazir = True, False
         self.satirlar = queue.Queue()
         env = {**os.environ, "HF_HUB_OFFLINE": "1", "PYTHONIOENCODING": "utf-8"}
+        hf = self._ayar().get("hf_home")   # ses.json: model önbelleği varsayılan yerde değilse (ör. Kut'un kurduğu ortam)
+        if isinstance(hf, str) and hf and os.path.isdir(hf):
+            env["HF_HOME"] = hf
         try:
             self.p = subprocess.Popen([py, "-I", str(self.isci_dosya)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
                                       cwd=str(self.KOK), env=env, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
