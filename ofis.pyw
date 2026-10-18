@@ -424,19 +424,31 @@ def kayit_ayarla(acik):
 # Çalışanlar varsayılan olarak yalnız-okur, Haiku ve boş bir çalışma klasöründe konuşur (sor). Bu kip AÇIKKEN (Ayarlar > "Tam yetenek"; VERI/tam-yetenek.json {"acik": true};
 # varsayılan KAPALI) yerel pencereden gelen sohbetlerde claude vault klasöründe çalışır (AGENTS.md ve kancalar yüklenir), varsayılan model Sonnet olur, Edit/Write/Bash/web açılır.
 # Tablet kapısından gelen sohbetlerde HİÇBİR ZAMAN açılmaz (TabletIsleyici.TABLET_KAPISI); ayar da yalnız yerel pencereden değişir (/api/ayar-sunucu tablette yok).
-def tam_acik():
+def tam_durum():
     try:
-        return json.loads((VERI / "tam-yetenek.json").read_text(encoding="utf-8-sig")).get("acik") is True
+        d = json.loads((VERI / "tam-yetenek.json").read_text(encoding="utf-8-sig"))
+        return {"acik": d.get("acik") is True, "tablet": d.get("tablet") is True}
     except (OSError, ValueError, AttributeError):
-        return False
+        return {"acik": False, "tablet": False}
 
 
-def tam_ayarla(acik):
+def tam_acik(tablet=False):
+    """Tablet kapısından gelen sohbette ayrıca "tablet" anahtarı da açık olmalı (varsayılan kapalı)."""
+    d = tam_durum()
+    return d["acik"] and (d["tablet"] or not tablet)
+
+
+def tam_ayarla(acik=None, tablet=None):
+    d = tam_durum()
+    if acik is not None:
+        d["acik"] = bool(acik)
+    if tablet is not None:
+        d["tablet"] = bool(tablet)
     gec = VERI / "tam-yetenek.json.tmp"
     VERI.mkdir(parents=True, exist_ok=True)
-    gec.write_text(json.dumps({"acik": bool(acik)}), encoding="utf-8")
+    gec.write_text(json.dumps(d), encoding="utf-8")
     os.replace(gec, VERI / "tam-yetenek.json")
-    gunluk("tam yetenek kipi " + ("açıldı" if acik else "kapatıldı"))
+    gunluk(f"tam yetenek kipi: açık={d['acik']} tablet={d['tablet']}")
 
 
 def ofis_notu_ekle(blok):
@@ -533,7 +545,7 @@ def sor(istek, yaz, tablet=False):
     """istek: {soru, oturum, model, efor}. yaz(dict) NDJSON satırı gönderir."""
     global _surec
     soru = str(istek.get("soru") or "").strip()[:8000]
-    tam_kip = tam_acik() and not tablet   # tam yetenek kipi: yalnız yerel pencere (tablet kapısında asla)
+    tam_kip = tam_acik(tablet)   # tam yetenek kipi: tablet kapısında yalnız "Tabletten de" anahtarı açıksa
     model = istek.get("model") if istek.get("model") in MODELLER else ("sonnet" if tam_kip else "haiku")   # ofis işleri Haiku ile (hızlı, kotayı az harcar); sohbet kutusundan değiştirilebilir
     ajan = istek.get("ajan") if istek.get("ajan") in ROLLER else "ada"
     efor = istek.get("efor") if istek.get("efor") in EFORLAR else "medium"
@@ -898,8 +910,8 @@ class Isleyici(BaseHTTPRequestHandler):
                 PANEL.ayarla(g["panel"])
             if "kayit" in g and isinstance(g["kayit"], bool):
                 kayit_ayarla(g["kayit"])
-            if "tam" in g and isinstance(g["tam"], bool):
-                tam_ayarla(g["tam"])
+            if isinstance(g.get("tam"), bool) or isinstance(g.get("tam_tablet"), bool):
+                tam_ayarla(g["tam"] if isinstance(g.get("tam"), bool) else None, g["tam_tablet"] if isinstance(g.get("tam_tablet"), bool) else None)
             return self._json(200, ayar_sunucu())
         if yol == "/api/tablet/ayar":
             if "acik" in g:
@@ -1306,7 +1318,7 @@ def tablet_ayarla(acik):
 
 
 def ayar_sunucu():
-    return {"panel": bool(PANEL and PANEL.acik_mi()), "panel_var": PANEL is not None, "claude": bool(claude_yolu()), "kayit": kayit_acik(), "tam": tam_acik(), "vault": VAULT.name}
+    return {"panel": bool(PANEL and PANEL.acik_mi()), "panel_var": PANEL is not None, "claude": bool(claude_yolu()), "kayit": kayit_acik(), "tam": tam_durum()["acik"], "tam_tablet": tam_durum()["tablet"], "vault": VAULT.name}
 
 
 def gercek_idleri():
