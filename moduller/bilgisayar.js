@@ -8,7 +8,7 @@
 // Modern OS: alt ortada cam dock, Ctrl+Space arama (uygulamalar + yüklü veri; sunucuya gitmez), bildirim baloncukları + zil menüsü, masaüstü bileşenleri (saat,
 // sıradaki iş, odak), birden çok pencere (başlıktan sürükle, küçült, büyüt; başlığa çift tık büyütür).
 // Uygulamalar ayrıca: Terminal (Ada ile gerçek iş: araç adımları canlı log, tam yetenek kipinde kritik işler "Emin misin?"), Sütlaç Koşusu (yılan oyunu),
-// Odak (pomodoro istatistiği: etkilesim.js > window.OFIS_ODAK). Sürprizler: masaüstünde soluk "çok gizli" klasörü (şifreli), 02:00-05:00 arası açınca
+// Odak (pomodoro istatistiği: etkilesim.js > window.OFIS_ODAK), Takvim (tarihli her şey tek akışta: moduller/takvim.js > window.OFIS_TAKVIM). Sürprizler: masaüstünde soluk "çok gizli" klasörü (şifreli), 02:00-05:00 arası açınca
 // Ada uyumanı söyler ve ekran koruyucu erken gelir (boşta: gece 25 sn, gündüz 3 dk), bilgisayar açıkken Sütlaç ara sıra klavyene çıkıp yazar.
 // Tuşlar: E masada aç, Ctrl+Space ara, Esc aramayı / öndeki pencereyi / bilgisayarı kapat. Ziyaretteyken (uzak) ve sunucusuz açılışta gerçek veri yoktur.
 // Telefon (GTA tarzı): telefon tuşu (Ayarlar > Telefon tuşu, varsayılan P) ofisin her yerinden aynı uygulamaları dikey bir telefonda açar. Sağ altta yukarı kayar, ofis kararmaz,
@@ -20,7 +20,7 @@
   const MASA = (window.HARITA && HARITA.noktalar && HARITA.noktalar.oyuncu) || [18, 6];
   const AJANLAR = Object.fromEntries((window.DEMO ? DEMO.ajanlar : []).filter((a) => !a.oyuncu).map((a) => [a.id, a]));
   const UYG = [
-    { id: "hedefler", ad: "Hedefler", ikon: "🎯" }, { id: "isler", ad: "İşler", ikon: "✅" }, { id: "fikirler", ad: "Fikirler", ikon: "💡" },
+    { id: "hedefler", ad: "Hedefler", ikon: "🎯" }, { id: "isler", ad: "İşler", ikon: "✅" }, { id: "takvim", ad: "Takvim", ikon: "📅" }, { id: "fikirler", ad: "Fikirler", ikon: "💡" },
     { id: "yapilanlar", ad: "Yaptıklarım", ikon: "🏆" }, { id: "posta", ad: "Posta", ikon: "✉️" }, { id: "mesajlar", ad: "Mesajlar", ikon: "💬" },
     { id: "projeler", ad: "Projeler", ikon: "📁" }, { id: "claudekodu", ad: "Claude Code", ikon: "✳️" }, { id: "terminal", ad: "Terminal", ikon: "🖥️" }, { id: "sutlac", ad: "Sütlaç Koşusu", ikon: "🐱" },
     { id: "odak", ad: "Odak", ikon: "⏱️" }, { id: "ayarlar", ad: "Ayarlar", ikon: "⚙️" }, { id: "gizli", ad: "çok gizli", ikon: "📁", gizli: true },
@@ -410,6 +410,7 @@
     }
     if (acilisEl && !acilisEl.hidden) { acilisAtla(); return true; }
     if ((e.ctrlKey || e.metaKey) && (e.code === "Space" || (e.key || "").toLowerCase() === "k")) { if (araEl.hidden) araAc(); else araKapat(); return true; }
+    if (cihaz === "pc" && uygulama === "takvim" && araEl.hidden && icAl("takvim") && window.OFIS_TAKVIM && OFIS_TAKVIM.tus(e)) return true;   // ←/→ ay, T bugün (telefonda yön tuşları yürür)
     return false;
   }
 
@@ -453,7 +454,7 @@
   }
 
   // ---------- masaüstü: simgeler + bileşenler (saat, profil, sıradaki, günün görevleri, odak, rozetler) ----------
-  const rozetSayac = () => { const s = S(); return { hedefler: s.hedef, isler: s.gecikti || null, posta: s.posta || null, mesajlar: Object.values(mesajlar).reduce((t, m) => t + (m.okunmadi || 0), 0) || null }; };
+  const rozetSayac = () => { const s = S(); return { hedefler: s.hedef, isler: s.gecikti || null, takvim: (window.OFIS_TAKVIM && OFIS_TAKVIM.bugunSay(veri)) || null, posta: s.posta || null, mesajlar: Object.values(mesajlar).reduce((t, m) => t + (m.okunmadi || 0), 0) || null }; };
   function masaustuCiz() {
     const sayac = rozetSayac();
     simgelerEl.replaceChildren(...UYG.map((u) => {
@@ -581,7 +582,8 @@
 
   function icerikCiz(id = uygulama) {
     const fn = { hedefler: hedeflerCiz, isler: islerCiz, fikirler: fikirlerCiz, yapilanlar: yapilanlarCiz, posta: postaCiz, mesajlar: mesajlarCiz, projeler: projelerCiz, odak: odakCiz, ayarlar: ayarlarCiz,
-      terminal: terminalCiz, claudekodu: () => (window.OFIS_CLAUDE_KODU ? window.OFIS_CLAUDE_KODU.ciz() : bosMesaj("Claude Code modülü yüklenmedi.")), sutlac: oyunCiz, gizli: gizliCiz }[id];
+      terminal: terminalCiz, claudekodu: () => (window.OFIS_CLAUDE_KODU ? window.OFIS_CLAUDE_KODU.ciz() : bosMesaj("Claude Code modülü yüklenmedi.")), sutlac: oyunCiz, gizli: gizliCiz,
+      takvim: () => (window.OFIS_TAKVIM ? OFIS_TAKVIM.ciz({ veri, ac: uygulamaAc, yeniden: () => icerikCiz("takvim"), sunucusuz: !ANAHTAR, cihaz }) : bosMesaj("Takvim modülü yüklenmedi.")) }[id];
     const p = pencereler.get(id); if (!fn || !p) return;
     const kaydirma = p.ic.scrollTop;
     p.ic.style.padding = id === "mesajlar" ? "10px 12px" : id === "terminal" || id === "sutlac" || id === "claudekodu" ? "0" : "";

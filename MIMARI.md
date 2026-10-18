@@ -437,6 +437,15 @@ bayat anlık görüntü, kalıcılık, bozuk dosya) ve iki pencereli başsız Ed
   istenirse telefon kapanıp bilgisayar açılır. Açılış BIOS'u, ekran koruyucu, gece uyarısı ve Sütlaç-klavye sürprizi yalnız masadaki bilgisayarda.
 - Dışa: `OFIS_BILGISAYAR.telefon()` (aç/kapat), `cihaz()`. Test: `telefonAc()`, `__ofis.bilgisayar().cihaz / telTus`.
 
+### Takvim (`moduller/takvim.js`, 19 Ekim)
+- BeyinOS uygulaması (bilgisayar ve telefon): ikinci beyindeki tarihli her şeyi tek, salt-okur akışta toplar (Kut'taki Pusula > Takvim mantığı, kod paylaşılmaz). Yeni sunucu ucu yok:
+  `/api/os/ozet` verisi + `window.OFIS_ODAK`. Türler: iş (açık işin son tarihi; biten iş = dosyanın son değişme günü), hedef (son tarih), oturum (Last-Session kartları), fikir (tarihli fikir),
+  odak (son 7 günün pomodoro turları). Durum: gecikmiş / bugün / yaklaşan / tamam.
+- Görünümler: Ay (6 haftaya kadar ızgara: tür renkli nokta + ilk iki başlık, günün rengi açık öğelerde en çok geçen tür; sarı yalnız hedef ve bugün halkası) + gün paneli
+  (boş günde "Sıradakiler"), Hafta, Ajanda (gecikmişler + ayın günleri). Tür çipleri göster/gizle; görünüm ve gizlenenler `localStorage["ofis-takvim-1"]`. Öğeye tıklayınca ilgili uygulama açılır.
+- Dar kap (telefon, `@container boscam (max-width: 620px)`): ızgara yalnız nokta, panel altta, hafta liste. Tuşlar yalnız masadaki bilgisayarda: ←/→ ay (haftada hafta), T bugün.
+- Masaüstü rozeti: bugünün açık iş/hedef sayısı. Dışa: `window.OFIS_TAKVIM {ciz(ctx), tus(e), bugunSay(veri)}`; ctx = {veri, ac(id), yeniden(), sunucusuz, cihaz}.
+
 ## Ortam sohbetleri (`sohbetler.js`, `moduller/sohbet-ortam.js`; 18 Ekim gecesi, paket C)
 - `sohbetler.js` `window.SOHBETLER`: 87 çok satırlı (4-8 satır, ≤ 90 karakter) kurgusal sohbet; alanlar dosya başında: `yer` (sebil, kahve, mutfak, toplanti, komsu), `dilim` (sabah/ogle/aksam/gece),
   `a b c` rol yuvaları (ajan id listesi), `iliski` (arkadas | rekabet = `iliskiler.gerilim`), `etiket`, `ruh`, satırlar `"a: metin"`. Yer tutucular `{a} {b} {c} {kedi} {saat}` (+ek: `{kedi:a}`) ve KISI'nin `{oyuncu} {asistan} {ajan.id:ek}`.
