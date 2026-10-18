@@ -1305,7 +1305,7 @@
   }
 
   // ---------- çizim ----------
-  const OTUR_INIS = -6, OTUR_KIRP = 2;   // masada beklerken karakterin dikey kayması (px, eksi = yukarı) ve alttan kırpılan satır
+  const OTUR_INIS = -4, OTUR_KIRP = 4;   // masada beklerken karakterin dikey kayması (px, eksi = yukarı) ve alttan kırpılan satır
   function ajanCiz(a) {
     if (a.oturak) {
       const o = a.oturak, px = Math.round(a.x * T), py = Math.round(a.y * T - T), adim = Math.floor(zaman * 2) % 6;
