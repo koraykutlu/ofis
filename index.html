@@ -129,6 +129,19 @@
   header button.secili, .ayar .seg button.secili { border-image-source:url(varliklar/ui/cerceve-acik.png); color:#2b2a3d; font-weight:600; }
   #sohbet select { padding:0 2px; } #sohbet select option { background:#2a2c3c; color:#f1eef8; }
   .ayar { border:12px solid transparent; border-image:url(varliklar/ui/cerceve-koyu.png) 4 fill / 12px / 0 stretch; background:none; border-radius:0; padding:4px 6px; }
+  /* Ayar paneli düzeni: çerçeve içi dar kaldığından seçenek satırlarında etiket üstte, düğmeler tam genişlikte (yan yana sıkışıp kesilmesin) */
+  .ayar .s:has(> .seg) { grid-template-columns:1fr; gap:3px; margin:10px 0; }
+  .ayar .s > .seg { grid-column:1; flex-wrap:nowrap; gap:2px; }
+  .ayar .seg button { padding:1px 2px; white-space:nowrap; overflow:hidden; text-overflow:clip; }
+  .ayar .seg select { min-height:28px; border:2px solid var(--kutuKenar); border-radius:0; background:var(--dugme); color:var(--yazi); padding:2px 4px; }
+  .ayar h2 { margin-bottom:4px; }
+  .ayar small { color:var(--soluk); }
+  /* Kaydırma çubukları ofis temasında: kare, ince, tema renkleri (--dugme/--kutu/--vurgu; pembe temada pembe) */
+  *::-webkit-scrollbar { width:12px; height:12px; }
+  *::-webkit-scrollbar-track { background:var(--dugme); border-left:2px solid var(--kutuKenar); }
+  *::-webkit-scrollbar-thumb { background:var(--kutu); border:2px solid var(--vurgu); border-radius:0; }
+  *::-webkit-scrollbar-thumb:hover { background:var(--kutuKenar); }
+  *::-webkit-scrollbar-corner { background:var(--dugme); }
   /* Düzenle modu (moduller/duzenle.js) */
   /* Düzenle çekmecesi: üstte yüzer, tutacağından çekilince iner; eşya seçilince kendiliğinden toplanır, harita açıkta kalır */
   #duzenPanel { position:absolute; top:6px; left:50%; width:min(600px, calc(100% - 16px)); max-height:min(52%, 380px); z-index:5; display:flex; flex-direction:column; gap:6px;

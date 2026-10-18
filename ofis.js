@@ -1305,6 +1305,7 @@
   }
 
   // ---------- çizim ----------
+  const OTUR_INIS = -4, OTUR_KIRP = 4;   // masada beklerken karakterin dikey kayması (px, eksi = yukarı) ve alttan kırpılan satır
   function ajanCiz(a) {
     if (a.oturak) {
       const o = a.oturak, px = Math.round(a.x * T), py = Math.round(a.y * T - T), adim = Math.floor(zaman * 2) % 6;
@@ -1314,8 +1315,9 @@
       return;
     }
     const yuruyor = a.yol.length > 0, tel = zaman < a.telefonSon, dans = zaman < efekt.parti && !yuruyor;
-    // Masasında bekleyen ajan oturur: önden bekleme karesi 5 px aşağıda, bacaklar (alt 8 px) kırpılır; masa önde, koltuk sırtı arkada kalır
-    const k = a.oturK || 0, ini = Math.round(5 * k), boy = 32 - Math.round(8 * k);
+    // Masasında bekleyen ajan oturur: önden bekleme karesi OTUR_INIS px yukarıda (monitörün arkasında yüz ve omuzlar görünsün; 5 px aşağıdayken
+    // monitör yüzü kapatıyor, karakter masada "kayboluyordu"), bacaklar kırpılır; masa önde, koltuk sırtı arkada kalır
+    const k = a.oturK || 0, ini = Math.round(OTUR_INIS * k), boy = 32 - Math.round(OTUR_KIRP * k);
     if (yerinde(a) && !tel && !dans && !a.gecis) {
       const px = Math.round(a.x * T), py = Math.round(a.y * T - T);
       f.drawImage(img.k[a.id], (18 + (Math.floor(zaman * 3) % 6)) * 16, 32, 16, boy, px, py + ini, 16, boy);
