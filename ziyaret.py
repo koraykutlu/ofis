@@ -908,7 +908,7 @@ class Ziyaret:
             ekle("Ziyaret", "ok", f"Dinliyor (port {self.port}).")
         gercek = [a for a in adresler if not a.startswith("169.254.")]
         if not gercek:
-            ekle("Ağ adresi", "hata", "Özel ağ adresi bulunamadı (Wi-Fi ya da kablo bağlı değil gibi).", "Wi-Fi'ye ya da Tailscale'e bağlan, sonra yeniden denetle.")
+            ekle("Ağ adresi", "hata", "Bu bilgisayarda özel ağ adresi bulunamadı (Wi-Fi ya da kablo bağlı değil gibi).", "Wi-Fi'ye ya da Tailscale'e bağlan, sonra yeniden denetle.")
         else:
             tail = [a for a in gercek if a.startswith("100.")]
             ekle("Ağ adresi", "ok", "Karşı tarafın gireceği adres: " + gercek[0] + (f" (Tailscale: {tail[0]})" if tail and tail[0] != gercek[0] else "") + f" · port {self.port}")
@@ -921,7 +921,7 @@ class Ziyaret:
         genel = [a for a, k in profil if k.strip().lower() == "public"]
         if genel:
             ekle("Windows ağ profili", "uyari", "Ağ \"Genel\" işaretli: " + ", ".join(genel) + ". Gelen bağlantılar güvenlik duvarında engellenebilir.",
-                 "Windows Ayarlar > Ağ ve internet > Wi-Fi > ağ özellikleri > Ağ profili: \"Özel\". Güvenlik duvarı sorusunda \"özel ağlar\"a izin ver.")
+                 "Windows Ayarlar > Ağ ve internet > Wi-Fi > ağ özellikleri > Ağ profili: özel ağ (Private). Güvenlik duvarı sorusunda \"özel ağlar\"a izin ver.")
         elif profil:
             ekle("Windows ağ profili", "ok", "Etkin ağlar özel ya da alan ağı.")
         sonuclar = {}
