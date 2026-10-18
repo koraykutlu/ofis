@@ -101,7 +101,7 @@
   .ayar .s { display:grid; grid-template-columns:118px 1fr 46px; align-items:center; gap:8px; margin:9px 0; }
   .ayar .s > span { font-size:13px; }
   .ayar .s > .seg { grid-column:2 / 4; }
-  .ayar .s:has(#a_mini), .ayar .s:has(#z_acik), .ayar .s:has(#a_muzik), .ayar .s:has(#a_somine), .ayar .s:has(#t_acik), .ayar .s:has(#s_panel), .ayar .s:has(#s_kayit) { grid-template-columns:1fr auto; }
+  .ayar .s:has(#a_mini), .ayar .s:has(#z_acik), .ayar .s:has(#a_muzik), .ayar .s:has(#a_somine), .ayar .s:has(#t_acik), .ayar .s:has(#s_panel), .ayar .s:has(#s_kayit), .ayar .s:has(#s_tam) { grid-template-columns:1fr auto; }
   .ayar output { text-align:right; color:var(--vurgu); font-variant-numeric:tabular-nums; font-size:12.5px; }
   .ayar input[type=range] { width:100%; accent-color:var(--vurgu); min-width:0; }
   .ayar .seg { display:flex; flex-wrap:wrap; gap:4px; } .ayar { overflow-x:hidden; } .ayar .seg button { min-width:0; }
@@ -398,6 +398,8 @@
     <div class="not" id="s_panel_not">Kapalı. Açınca Haiku (Claude aboneliğinden küçük çağrılar, günde ~6-10) vault notlarını okuyup brifing, TV manşeti ve çalışan konuşmalarını tazeler. Bugün kartındaki iş listesi bundan bağımsız dosyadan gelir.</div>
     <label class="s"><span>Konuşmaları ikinci beyne kaydet</span><input type="checkbox" id="s_kayit"></label>
     <div class="not">Kapalı. Açınca ofiste Ada ve ekiple yaptığın sohbetler ve odak/gün kapatma/tik olayları vault'ta <code>notes/ofis-sohbet/&lt;gün&gt;.md</code> dosyasına eklenir (yalnız ekleme; ham kayıt). Kapalıyken hiçbir şey yazılmaz.</div>
+    <label class="s"><span>Tam yetenek (çalışanlar Claude Code gibi çalışır)</span><input type="checkbox" id="s_tam"></label>
+    <div class="not" id="s_tam_not">Kapalı. Açınca bu bilgisayarın penceresindeki sohbetlerde çalışanlar vault klasöründe çalışır (AGENTS.md ve kancalar yüklenir), varsayılan model Sonnet olur ve dosya yazma/düzenleme, <b>komut çalıştırma (Bash)</b> ve web açılır. Onay kartı gerekmez: çalışan yaptığını söyler. Tablet kapısından gelen sohbetlerde hiçbir zaman açılmaz. Yalnız bilgisayarını başkasıyla paylaşmıyorsan aç.</div>
   </div>
   <div id="tabletBolum">
     <h2>Tablet / telefon</h2>
