@@ -128,11 +128,12 @@
     if (kedi.durum === "klavye" && kedi.ust) { c = KEDI_KARE.otur[0]; px = kedi.ust.px; py = kedi.ust.py; }
     else if (kedi.yol.length) { c = KEDI_KARE.yuru[Math.floor(kedi.kare * (kedi.hiz > 4 ? 14 : 8)) % 2]; px = Math.round(kedi.x * T); py = Math.round(kedi.y * T + 16 - c.height); }
     else if (kedi.durum === "yat") {
-      // Sayfa 36 parça ama 12 kare x 3: her karenin ortadaki parçası (indeks 1) kedi; diğer ikisi kenar süsü. Hepsini döndürmek kediyi gidip getiriyordu.
-      const kr = (Math.floor(kedi.kare * 5) % 12) * 3 + 1; px = Math.round(kedi.x * T); py = Math.round(kedi.y * T);
-      f.fillStyle = "rgba(20,16,30,.2)"; f.beginPath(); f.ellipse(px + 8, py + 15, 7, 2, 0, 0, 7); f.fill();
+      // Sayfa 12 kare x 48 px: her kare kuyruk (sol 16 px) + gövde (orta) + baş/kulak (sağ) birlikte tek kedi. Yalnız orta 16 px çizilince kuyruk ve kulak kesiliyordu;
+      // karenin tamamı, gövde karonun üstünde kalacak biçimde 16 px sola kaydırılarak çizilir (aynalama karo merkezine göre olduğundan iki yönde de ortalı).
+      const kr = Math.floor(kedi.kare * 5) % 12; px = Math.round(kedi.x * T); py = Math.round(kedi.y * T);
+      f.fillStyle = "rgba(20,16,30,.2)"; f.beginPath(); f.ellipse(px + 8, py + 15, 12, 2, 0, 0, 7); f.fill();
       f.save(); if (kedi.bakis < 0) { f.translate(px * 2 + 16, 0); f.scale(-1, 1); }
-      f.drawImage(kediYat, kr * 16, 0, 16, 16, px, py, 16, 16); f.restore(); return;
+      f.drawImage(kediYat, kr * 48, 0, 48, 16, px - 16, py, 48, 16); f.restore(); return;
     } else { c = KEDI_KARE.otur[Math.floor(kedi.kare) % 4 === 0 ? 1 : 0]; px = Math.round(kedi.x * T); py = Math.round(kedi.y * T + 16 - c.height) + (kedi.durum === "ye" ? Math.round(Math.abs(Math.sin(kedi.kare * 9)) * 2) : 0); }
     if (!kedi.ust) { f.fillStyle = "rgba(20,16,30,.2)"; f.beginPath(); f.ellipse(px + 8, py + c.height - 1, 6, 2, 0, 0, 7); f.fill(); }
     f.save(); if (kedi.bakis < 0) { f.translate(px * 2 + 16, 0); f.scale(-1, 1); }
