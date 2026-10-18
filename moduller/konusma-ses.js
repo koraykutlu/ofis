@@ -5,7 +5,8 @@
 // - Ses yüksekliği dinleyiciye (OFIS_IC.dinleyici(): izlenen ajan ya da oyuncu) uzaklıkla azalır; başka odadaysa kısık ve boğuk; sağ/sol pan. Konuşan hareket
 //   ederse ses canlı güncellenir. Web Audio: ses.js'in ana bus'una bağlanır (SES.baglanti()), ayrı AudioContext açılmaz.
 // - Tek ses motoru olduğundan her ajana perde (playbackRate) + konuşma temposu (sunucu hızı) + iki bantlı ton eşitleyici profili verilir (PROFIL).
-// - Dışa açılan: window.OFIS_SES_AJAN = { konus(ajanId, metin, {x, y, oda, oncelik}), acik(), durum(), cevap(ajanId, metin) }.
+// - Dışa açılan: window.OFIS_SES_AJAN = { konus(ajanId, metin, {x, y, oda, oncelik, kanal}), acik(), durum(), cevap(ajanId, metin) }.
+//   `kanal` (ör. "diyalog": E ile açılan kutu) verilirse aynı kanaldaki önceki satır kesilir; seçim değişince eski cevap konuşmaya devam etmez.
 //   `misafir:<id>` gibi bilinmeyen kimlikler varsayılan misafir profili alır (kimlikten türetilmiş küçük sapmayla).
 // Ayarlar paneline "Ajan sesleri" bölümü eklenir (aç/kapat, seviye, gerçek sohbet cevaplarını sesli oku); ayar localStorage'da.
 (() => {
@@ -43,7 +44,7 @@
   const kaydet = () => { try { localStorage.setItem(DEPO, JSON.stringify(ayar)); } catch (e) { /* kayıt yok */ } };
 
   let motor = { var: false, hazir: false, yukleniyor: false, bakildi: false };
-  let kapaliSon = 0, ardisikHata = 0, calis = false, calan = null;
+  let kapaliSon = 0, ardisikHata = 0, calis = false, calan = null, calanIt = null;
   const sira = [], kayit = [];
   const sayac = { istek: 0, wav: 0, bekle: 0, hata: 0, bayat: 0, tasma: 0, gorunmez: 0, uzak: 0, calindi: 0 };
   const bekle = (ms) => new Promise((ok) => setTimeout(ok, ms));
@@ -86,9 +87,10 @@
     if (!uygun()) return false;
     metin = String(metin || "").trim();
     if (!/\p{L}/u.test(metin)) return false;
-    const ic = I(), it = { id, metin, t: performance.now(), ajan: o.ajan || null, x: o.x, y: o.y, oda: o.oda, oncelik: o.oncelik || 0, p: profil(id), durum: "getiriliyor" };
+    const ic = I(), it = { id, metin, t: performance.now(), ajan: o.ajan || null, x: o.x, y: o.y, oda: o.oda, oncelik: o.oncelik || 0, kanal: o.kanal || null, p: profil(id), durum: "getiriliyor" };
     if (!it.ajan && it.x == null && !it.oncelik && ic && ic.bul) it.ajan = ic.bul(id) || null;
     if (kazanc(it).g < ESIK && !it.oncelik) { sayac.uzak++; return false; }   // duyulmayacak kadar uzak
+    if (it.kanal) kanalKes(it.kanal);   // aynı kanalda (diyalog kutusu) yeni satır eskisini keser: sıradakini atar, çalanı durdurur
     if (it.oncelik) sira.unshift(it); else sira.push(it);
     while (sira.length > KUYRUK_ENFAZLA) {   // taşma: en eski öncelliksiz satır düşer
       let k = -1; for (let i = 0; i < sira.length; i++) if (!sira[i].oncelik && (k < 0 || sira[i].t < sira[k].t)) k = i;
@@ -96,6 +98,10 @@
     }
     getir(it); pompa();
     return true;
+  }
+  function kanalKes(kanal) {
+    for (let i = sira.length - 1; i >= 0; i--) if (sira[i].kanal === kanal) sira.splice(i, 1)[0].durum = "atildi";
+    if (calanIt && calanIt.kanal === kanal && calanIt.dur) calanIt.dur();
   }
   function mirilti(it) {   // ses üretilemedi: eski sentez mırıltısı (satır hâlâ tazeyse)
     const ic = I(), a = it.ajan; if (!ic || !a || performance.now() - it.t > ILK_YAS) return;
@@ -159,9 +165,10 @@
     };
     const ilk = guncelle(true); kayit.push({ id: it.id, metin: it.metin.slice(0, 40), lp: Math.round(ilk.lp), g: +ilk.g.toFixed(3), baska: ilk.baska, m: +ilk.m.toFixed(1), pan: +ilk.pan.toFixed(2) }); if (kayit.length > 30) kayit.shift();
     const z = setInterval(() => guncelle(false), 90);
-    sayac.calindi++;
+    sayac.calindi++; calanIt = it;
+    it.dur = () => { try { gn.gain.setTargetAtTime(0, ctx.currentTime, 0.02); src.stop(ctx.currentTime + 0.08); } catch (e) { /* zaten durdu */ } };
     await new Promise((ok) => { src.onended = ok; setTimeout(ok, sure * 1000 + 1500); src.start(); });
-    clearInterval(z); calan = null;
+    clearInterval(z); calan = null; calanIt = null; it.dur = null;
     try { src.disconnect(); ls.disconnect(); hs.disconnect(); lp.disconnect(); gn.disconnect(); if (pn) pn.disconnect(); } catch (e) { /* zaten ayrık */ }
   }
 
@@ -174,7 +181,7 @@
   }
 
   const DIS = {
-    konus(ajanId, metin, o = {}) { return ekle(String(ajanId || "misafir"), metin, { x: o.x, y: o.y, oda: o.oda, oncelik: o.oncelik }); },
+    konus(ajanId, metin, o = {}) { return ekle(String(ajanId || "misafir"), metin, { x: o.x, y: o.y, oda: o.oda, oncelik: o.oncelik, kanal: o.kanal }); },
     acik: () => uygun(),
     cevap(ajanId, metin) { if (ayar.cevap && uygun()) ekle(String(ajanId), cevapMetni(metin), { oncelik: 2 }); },
     durum() {

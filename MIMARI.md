@@ -340,6 +340,12 @@ bayat anlık görüntü, kalıcılık, bozuk dosya) ve iki pencereli başsız Ed
 - **Test kancaları:** `ziyaretSohbet()`, `ziyaretYaz(metin)`, `ziyaretTepki(1-4)`. Doğrulama (portlar 8611/8612, ziyaret 8615/8616, keşif 8617): `ofis.pyw` iki örnek + doğrudan imzalı istekler (78 sunucu/birim kontrolü), iki başsız Edge ile 26 uçtan uca kontrol
   (gerçek tuşlar, balon, kart, HTML, hız sınırı, ayrılma, konsol temiz). Çekirdekte değişiklik yok; `ofis.pyw`'de tek satır: `Sunucu.request_queue_size = 128` (sayfa açılışında Windows'ta ERR_CONNECTION_REFUSED).
 
+### Bağlantı denetimi ve dayanıklılık (ziyaret.py > `a_doktor`; Ayarlar > Ziyaret > "Bağlantıyı denetle")
+- `a_doktor` hiçbir ayarı değiştirmez; maddeler `{ad, durum: ok|uyari|hata, ayrinti, cozum}`: ziyaret açık/dinliyor, ağ adresi, UDP keşif, Windows ağ profili (Public uyarısı), eşleşmiş her ofisle imzalı `/z/ping` (ulaşım, imza/saat, protokol, harita-atlas-katalog dosya farkı, saat farkı, Ofis sürümü, farklı ağ).
+- `yerel_adresler`: varsayılan yolun adresi başta (UDP `connect` ile kaynak adres seçilir), Tailscale (100.64/10) dahil; 169.254 yalnız başka adres yoksa. Ad çözümlemesi tek başına yanlış sırada ve eksik dönüyordu.
+- `OZEL_AG`'a 100.64.0.0/10 (Tailscale) eklendi: uzaktaki ofisle elle IP girerek eşleşme/ziyaret; kod, imza ve onay şartları aynen sürer.
+- Sürüm özeti: `ozet` (ham, eski eşler) yanında `ozet_n` (satır sonları LF'ye çevrilmiş) gönderilir; `_ozet_uyumlu` ikisini de kabul eder, CRLF/LF farkı "sürüm farklı" yapmaz. `z_ping`/`z_kimlik` ek alanlar (`dosyalar`, `t`, `uygulama_surumu`) eski eşlerce yok sayılır.
+
 ## 17 Ekim denetim düzeltmeleri (4. aşama sonrası)
 - **Sürüm devri / `/api/kapat`:** artık yalnız `POST`, Host denetimli, `Origin` başlığı varsa 403 ve özel başlık `X-Ofis-Kapat: 1` ister (web sayfası sunucuyu kapatamaz). Yeni başlatıcı eskisini önce POST ile
   kapatır; eski sürümler (GET bilen) 403 verirse tek seferlik GET'e geri düşer. İkisi de sınandı: eski yedek kodu açıkken yeni başlatıcı devraldı; yeni→yeni devir POST ile.
@@ -386,7 +392,8 @@ bayat anlık görüntü, kalıcılık, bozuk dosya) ve iki pencereli başsız Ed
   Ayarlar > "Ajan sesleri" (aç/kapat, seviye, gerçek sohbet cevaplarını sesli oku; `localStorage["ofis-konusma-ses-1"]`). Ses motoru yoksa bölüm "bulunamadı" der. Header'daki "Sesi aç" kapalıysa ajanlar sessiz.
 - **Profil** (`PROFIL`; perde = `playbackRate`, tempo = net konuşma hızı, sunucuya istenen hız `tempo/perde`; ton/parlak = alçak/tiz raf dB): ada 1,00/1,00 (doğal), oyuncu 0,93, muhabir1 1,05, muhabir2 1,14, postaci 1,10, tarayici 0,90, analist 0,94, editor 0,98,
   denetci 0,87, sosyal 1,12, spiker 0,96, dagitici 1,03; bilinmeyen (`misafir:<id>`) kimlikten türetilmiş sapmalı varsayılan misafir profili.
-- **Dışa açılan** `window.OFIS_SES_AJAN = {konus(ajanId, metin, {x, y, oda, oncelik}), acik(), durum(), cevap(ajanId, metin)}` (ziyaret sohbeti `konus`'u, `sohbet.js` bitince `cevap`'ı çağırır; `oncelik > 0` görüş denetimini atlar ve sıranın önüne geçer).
+- **Dışa açılan** `window.OFIS_SES_AJAN = {konus(ajanId, metin, {x, y, oda, oncelik}), acik(), durum(), cevap(ajanId, metin)}` (ziyaret sohbeti `konus`'u, `sohbet.js` bitince `cevap`'ı çağırır; `oncelik > 0` görüş denetimini atlar ve sıranın önüne geçer; `kanal` verilirse aynı kanaldaki sıradaki satır atılır, çalan satır kısa sönümle durur).
+- **Diyalog kutusu** (`E`): `ofis.js > diyalogSesi(a, metin)` selamı, seçenek cevabını ve özel diyalog metnini `konus(a.id, metin, {x, y, oncelik: 1, kanal: "diyalog"})` ile seslendirir (yeni seçim eski cevabı keser); ses modülü satırı almazsa eski `konus` mırıltısı.
 - Çekirdekte iki küçük değişiklik: `ofis.js > konus()` mırıltıyı `MOD("konusmaSatiri")`'ndan sonra ve yalnız `!a.sesli` iken çalar; `ses.js` `baglanti()`. `__ofis` kancaları: `sesAjanDurum()`, `sesAjanDene(id, metin, zorla)`, `sesAjanAyar(k, v)`, `sesAjanProfil(id)`, `sesAjanYokla()`.
 - Test: `py -3 ofis.pyw --tarayicisiz --port 8604 --veri %TEMP%\ofis-D` (sunucu 3 dk sayfadan nabız gelmezse kapanır); başsız Edge ile `SES.ac()` sonra `OFIS_IC.konus(ajan, metin)`. Ölçüm (RTX 3060): soğuk ilk üretim ~22 sn (model yükleme), sıcak ~0,3-0,4 sn/cümle, önbellek isabeti ~20 ms; sayfadan ilk satır ~0,9 sn, önbellekli ~0,16 sn.
 

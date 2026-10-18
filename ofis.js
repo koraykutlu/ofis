@@ -471,9 +471,9 @@
     diyalogAjan = a; a.konusuyor = true; tuslar.clear(); oyuncu.yol = []; oyuncu.sonra = null;
     yonBak(oyuncu, a); if (!yerinde(a)) yonBak(a, oyuncu);
     el("dAd").textContent = a.ad; el("dRol").textContent = a.rol;
-    portreCiz(a); el("dMetin").textContent = MOD("selam", a, d.selam) || d.selam; MOD("konustu", a);
+    portreCiz(a); const selam = MOD("selam", a, d.selam) || d.selam; el("dMetin").textContent = selam; MOD("konustu", a);
     secenekCiz([...(window.SOHBET ? [{ etiket: "🧠 Gerçekten sor", cevap: "Sor bakalım, notlara bakarım.", eylem: "beyneSor" }] : []), ...d.secenekler]);
-    el("diyalog").classList.add("acik"); SES.cal("konus", a.perde);
+    el("diyalog").classList.add("acik"); diyalogSesi(a, selam);
     secAjan(a);
   }
   // Veri dışı diyalog (toplantı kararı gibi): konuşan ajanın portresiyle metin ve fn'li seçenekler
@@ -483,7 +483,12 @@
     el("dAd").textContent = a.ad; el("dRol").textContent = a.rol; portreCiz(a); el("dMetin").textContent = metin;
     const k = el("secenekler"); k.textContent = ""; k._liste = secenekler;
     secenekler.forEach((s, i) => { const b = document.createElement("button"), kb = document.createElement("kbd"); kb.textContent = i + 1; b.append(kb, s.etiket); b.onclick = () => secim(s); k.appendChild(b); });
-    el("diyalog").classList.add("acik"); SES.cal("konus", a.perde);
+    el("diyalog").classList.add("acik"); diyalogSesi(a, metin);
+  }
+  // Diyalog kutusundaki satır: ajan sesi (moduller/konusma-ses.js) açıksa seslendirilir, yeni satır öncekini keser; yoksa sentez mırıltısı
+  function diyalogSesi(a, metin) {
+    const sa = window.OFIS_SES_AJAN;
+    if (!(sa && sa.konus(a.id, metin, { x: a.x, y: a.y, oncelik: 1, kanal: "diyalog" }))) SES.cal("konus", a.perde);
   }
   function secenekCiz(liste) {
     const k = el("secenekler"); k.textContent = ""; if (!liste.some((s) => s.geri)) k._liste = liste;
@@ -497,7 +502,7 @@
     if (s.geri) return secenekCiz(s.geri);
     const a = diyalogAjan;
     if (s.fn) { gunluk(`${OAD} → ${a.ad}: ${s.etiket}`, true); return s.fn(a); }   // özel diyaloglar (toplantı kararı) metni ve seçenekleri kendisi kurar
-    el("dMetin").textContent = MOD("cevap", a, s) || s.cevap; SES.cal("konus", a.perde);
+    const cevap = MOD("cevap", a, s) || s.cevap; el("dMetin").textContent = cevap; diyalogSesi(a, cevap);
     if (s.alt) secenekCiz([...s.alt, { etiket: "↩ Geri", geri: el("secenekler")._liste }]); portreCiz(a);
     gunluk(`${OAD} → ${a.ad}: ${s.etiket}`, true);
     if (s.eylem && EYLEMLER[s.eylem]) { EYLEMLER[s.eylem](a); if (a.yol.length) sonra(1.4, () => { if (diyalogAjan === a) diyalogKapat(); }); }
