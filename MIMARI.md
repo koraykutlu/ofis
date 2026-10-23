@@ -118,6 +118,16 @@ Tarayıcıda çalışan, derleme adımı olmayan tek sayfa. Sunucu: `py -3 -m ht
   buzdolabı, radar/yayın sunucu fanı, haber merkezi uğultu + uzak klavye). Konumlu ses: `SES.calKonum(ad, panX, uzaklik, ...arg)`; `ofis.js`'te `sesKonum(ad, x, y, ...arg)`
   oyuncuya göre pan/uzaklık hesaplar (başka oda +6 karo). `SES.cal` imzası aynı. Test: `__ofis.sesDene()`, `sesDurum()`, `isik()`, `ayar()`, `mini()`, `miniEkran(odaId)`, `miniGit(odaId)`
   (son beşi modüllerin `test` alanından `__ofis`'e eklenir).
+- **Dosyadan sesler**: `sesler/` (ElevenLabs ile üretilen .mp3; pakete girer, güncelleyici izin listesinde; dosya yoksa her şey sentezle çalar). `sabah|ogle|aksam|gece.mp3` gün müziği:
+  oyun saatine (`OFIS_IC.dakika()`) göre 06/12/17/21 dilimleri, `<audio>` akışı → `muzikBus`, Atölye'de ve odak modunda susar (orada sentez Atölye müziği).
+  `ortam.mp3` döngülü oda sesi → `ambBus`; yüklenince sentez uğultuları (oda tonu, fan, buzdolabı, haber uğultusu) susar. `ORNEK` tablosundaki efektler
+  (`adim, kapiAc, kapiKapa, miyav, mirr, asansor, kahve, konus`) dosya yüklendiyse dosyadan, yoksa aynı adlı sentezle çalar; yüklenirken yüksek
+  dosyalar RMS'e göre kısılır (`esitle`, yalnız kısar). Ayrıca `bildirim, gorev, karne, ret, yazici, telefon, guguk` (saat kadar tekrar), `bloop`, `klavye`, `tus` (tek tuş tıkı; Sütlaç klavyedeyken patisiyle düzensiz basar, sutlac.js).
+  Dış sesler (`DIS`, döngü → `ambBus`): `kuslar` sabah/öğle, `yagmur` her dilim başında %20 olasılıkla; Atölye'de %30. Aynı çeşit art arda gelmez, yükseklik ±%10 oynar.
+  Konumlu seste kazanç `1 / (1 + (uzaklık/menzil)²)`, menzil ses tipine göre (`MENZIL`: mırlama 2, adım/klavye 3, kapı 4, kahve/yazıcı 5, miyav 6,
+  telefon 8, guguk 9; varsayılan 4); %3 altı çalmaz. Konumlu sesler uzaklığa göre oda yankısına (`yanki`, ~0,7 sn sentez darbe yanıtı → efektBus) gider:
+  yakın kuru, uzak yankılı. Konuşma (`konus`) ve ajan sesi (`SES.kis(sn)`, konusma-ses.js) sırasında gün müziği %35 kısılır. Ayarlar: "Müzik seviyesi"
+  (`SES.seviye("muzik")`, `muzikSes`) ve "Müzik" aç/kapa (gün müziği + Atölye). `SES.durum().dosya` neyin yüklendiğini gösterir.
 
 ## Test
 - `node --check ofis.js` (sözdizimi). Tarayıcı konsolu: `window.__ofis` kancaları — `ilerle(sn)` (simülasyonu ilerletir),
@@ -264,7 +274,7 @@ Tarayıcıda çalışan, derleme adımı olmayan tek sayfa. Sunucu: `py -3 -m ht
   sembolik bağ, şifreli, yinelenen ad, boyut/oran/sayı sınırı; **izin listesi dışı tek dosya bile varsa tümü reddedilir**) → `.py/.pyw` derlenir → önceki dosyalar `yedek/<sürüm>/dosyalar/` + `yedek.json` → atomik değiştirme → `kur.py --uret` (üretici betikleri değiştiyse görselleri yeniler)
   → hata olursa uygulananlar geri konur → `POST /api/kapat` ile açık ofis kapatılır, `ofis.pyw` aynı bağımsız değişkenlerle `--tarayicisiz` yeniden açılır. Açık sayfa (`guncelleme.js`) `/api/kimlik`i yoklar; sunucu düşüp dönünce `location.reload()` yapar (yeni pencere açılmaz).
   Ağ: yalnız https; `api.github.com` (API) ve `github.com` + GitHub release CDN'leri (indirme), her yönlendirme adımı yeniden denetlenir, ana makine küresel adrese çözülmeli. Sabitler (`SEMALAR`, `*_HOSTLAR`, `API_ADRES`) testte sahte yerel sunucuya çevrilir, üretimde değişmez.
-- **Kurulacak dosyalar (`yol_incele`):** kökte `.html .js .py .pyw .bat .ps1 .md`, `surum.json`, `LICENSE`; `moduller/` (`.js .css .html`), `araclar/` (`.py .ps1 .bat .json`, `araclar/katalog/` hariç), `harita/` (`.tmj .json`). Asla: `varliklar/` (yalnız `BURAYA.txt` sessizce atlanır), `dist/`, `yedek/`, noktayla başlayanlar, `*-yedek`,
+- **Kurulacak dosyalar (`yol_incele`):** kökte `.html .js .py .pyw .bat .ps1 .md`, `surum.json`, `LICENSE`; `moduller/` (`.js .css .html`), `araclar/` (`.py .ps1 .bat .json`, `araclar/katalog/` hariç), `harita/` (`.tmj .json`), `sesler/` (`.mp3`, 0.15.0'dan beri). Asla: `varliklar/` (yalnız `BURAYA.txt` sessizce atlanır), `dist/`, `yedek/`, noktayla başlayanlar, `*-yedek`,
   durum dosyaları (`kisi/eslesmeler/duzen/gorunum/ziyaret/guncelleme*.json`, `gunluk.txt`). Zip'te olmayan eski dosyalar silinmez. Yedek en çok 3 sürüm tutulur; `--geri` son güncellemeyi geri alır (yeni eklenen dosyalar silinir, üretici damgası yeniden kontrol edilir).
 - **El yolu:** `py -3 araclar/guncelle.py --zip Ofis-x.zip [--sha256 HEX]` (yanında `SHA256SUMS` ya da `<zip>.sha256` varsa doğrulanır; yoksa uyarı + onay, `--evet` atlar), `--denetle`, `--geri`, `--zorla`, `--yeniden-baslat [--port N]`. Yeni sürüm zip'ini eski kurulumun üstüne açıp `Kur.bat` çalıştırmak da güncellemedir (damgalı üretim).
 - **Yayına hazırlık:** `.gitignore` (LimeZu/üretilen görseller, `dist/`, `yedek/`, kişisel json'lar, geliştirici notları `DEVAM/IYILESTIRME/TASARIM-*`), `LICENSE` (MIT), README başında yayın bölümü. Push/Release kullanıcı onayıyla.

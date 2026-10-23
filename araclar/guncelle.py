@@ -66,7 +66,8 @@ HARIC_DURUM = {"kisi.json", "eslesmeler.json", "duzen.json", "gorunum.json", "zi
 YASAK_KLASOR = {"varliklar", "dist", "yedek", "__pycache__"}
 KOK_UZANTI = {".html", ".js", ".py", ".pyw", ".bat", ".ps1", ".md", ".webmanifest"}
 KOK_ADLAR = {"surum.json", "LICENSE"}
-ALT_KLASOR = {"moduller": {".js", ".css", ".html"}, "araclar": {".py", ".ps1", ".bat", ".json"}, "harita": {".tmj", ".json"}, "yazi": {".ttf", ".txt"}}   # yazi: Pixelify Sans (SIL OFL) + lisans metni
+ALT_KLASOR = {"moduller": {".js", ".css", ".html"}, "araclar": {".py", ".ps1", ".bat", ".json"}, "harita": {".tmj", ".json"}, "yazi": {".ttf", ".txt"},
+              "sesler": {".mp3"}}   # yazi: Pixelify Sans (SIL OFL) + lisans metni; sesler: müzik ve efektler (ses.js)
 URETICILER = ("atlas_yap.py", "katalog_yap.py", "gardirop_yap.py", "ui_yap.py")
 
 

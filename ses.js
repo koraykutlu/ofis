@@ -1,9 +1,29 @@
-// Ofis sesleri: hepsi Web Audio ile sentezlenir, dosya yok. Tarayıcı kuralı gereği ilk tıklamada açılır.
+// Ofis sesleri: Web Audio ile sentezlenir. Tarayıcı kuralı gereği ilk tıklamada açılır.
+// Ses dosyaları `sesler/` (ElevenLabs ile üretildi, pakete girer): varsa gün müziği, ortam sesi, dış sesler ve ORNEK'teki efektler dosyadan
+// çalar; dosya yoksa her şey eskisi gibi sentezle çalar.
 window.SES = (() => {
-  // Düğüm grafiği: efektler -> efektBus, ambiyans katmanları -> ambBus; ikisi ana (genel) -> sıkıştırıcı -> hoparlör.
+  // Düğüm grafiği: efektler -> efektBus, ambiyans katmanları -> ambBus, gün müziği -> muzikBus; üçü ana (genel) -> sıkıştırıcı -> hoparlör.
   // Konumlu efekt: kazanç -> alçak geçiren (uzakta) -> StereoPanner -> efektBus. `hedef` o an çalınan sesin bağlandığı düğümdür.
-  let ctx = null, ana = null, efektBus = null, ambBus = null, hedef = null, acik = false;
-  const seviye = { genel: 1, ambiyans: 1, efekt: 1 };   // ayarlar paneli seviyeleri (1 = varsayılan)
+  let ctx = null, ana = null, efektBus = null, ambBus = null, muzikBus = null, muzikKis = null, yanki = null, hedef = null, acik = false;
+  const seviye = { genel: 1, ambiyans: 1, efekt: 1, muzik: 1 };   // ayarlar paneli seviyeleri (1 = varsayılan)
+  const SES_YOL = "sesler/";
+  // Dosyadan çalan efektler: ad -> [dosyalar (rastgele biri), kazanç]. Dosya yüklenemezse aynı adlı sentez çalar.
+  // Kazançlar gerçekteki yükseklik sırasına göre: telefon/guguk > kahve/yazıcı > miyav > kapı > adım/klavye > mırlama.
+  const ORNEK = {
+    adim: [["adim-1", "adim-2", "adim-3"], 0.25], kapiAc: [["kapiAc"], 0.25], kapiKapa: [["kapiKapa"], 0.25],
+    miyav: [["miyav-1", "miyav-2"], 0.45], mirr: [["mirr"], 0.4], asansor: [["asansor"], 0.3], kahve: [["kahve"], 0.4], konus: [["konus"], 0.22],
+    bildirim: [["bildirim"], 0.35], gorev: [["gorev"], 0.4], karne: [["karne"], 0.45], ret: [["ret"], 0.3], yazici: [["yazici"], 0.38],
+    telefon: [["telefon"], 0.45], guguk: [["guguk"], 0.45], bloop: [["bloop"], 0.3], klavye: [["klavye-1", "klavye-2", "klavye-3"], 0.18],
+    tus: [["tus-1", "tus-2", "tus-3"], 0.3],   // tek tuş tıkı (Sütlaç klavyede)
+  };
+  // Konumlu seste duyulma menzili (karo): kazanç 1 / (1 + (uzaklık/menzil)²). Sessiz şeyler (mırlama, adım, klavye) yakında söner,
+  // yüksek şeyler (telefon, guguk) uzaktan da duyulur. Listede olmayan: 4.
+  const MENZIL = { mirr: 2, adim: 3, klavye: 3, tus: 3, bloop: 3, tak: 3, konus: 4, kapiAc: 4, kapiKapa: 4, kahve: 5, yazici: 5, sikisti: 5,
+                   miyav: 6, asansor: 6, telefon: 8, guguk: 9 };
+  // Pencereden dış sesler (döngü): kuşlar sabah ve öğlen; yağmur her dilim başında %20 olasılıkla o dilim boyunca.
+  const DIS = { kuslar: ["sabah", "ogle"], yagmur: [] };
+  const ornekler = {};   // ad -> [AudioBuffer]
+  let dosyaOrtam = false;   // ortam.mp3 çalıyorsa sentez uğultuları (oda tonu, fan, buzdolabı, haber uğultusu) susar
   let odaId = null, taban = null, katmanlar = {}, uzakBus = null;
 
   function gurultu(sn) {
@@ -30,11 +50,110 @@ window.SES = (() => {
   function odaUygula() {
     if (!ctx) return;
     const t = ctx.currentTime, h = ODA_SES[odaId] || {};
-    taban.gain.setTargetAtTime(h.taban ?? 1, t, 0.6);
+    taban.gain.setTargetAtTime(dosyaOrtam ? 0 : h.taban ?? 1, t, 0.6);
     for (const [ad, k] of Object.entries(katmanlar)) {   // oda değişince yumuşak geçiş
-      let hedef = h[ad] || 0;
+      let hedef = dosyaOrtam && ad !== "lofi" ? 0 : h[ad] || 0;
       if (ad === "lofi") hedef = muzikAcik ? (odakVar ? 1 : hedef) : 0;   // Ayarlar'dan kapalıysa susar; odak modunda her odada duyulur
       k.setTargetAtTime(hedef, t, 0.7);
+    }
+    if (ortamG) ortamG.gain.setTargetAtTime(odaId === "studyo" ? 0.15 : 0.5, t, 0.7);
+    gunMuzigiAdim();
+  }
+  // ---- Dosyadan sesler: efekt örnekleri (AudioBuffer), gün müziği ve ortam sesi (akış: <audio> + MediaElementSource)
+  function orneklerYukle() {
+    for (const [ad, [dosyalar]] of Object.entries(ORNEK)) for (const d of dosyalar)
+      fetch(SES_YOL + d + ".mp3").then((r) => (r.ok ? r.arrayBuffer() : null)).then((b) => b && ctx.decodeAudioData(b))
+        .then((tampon) => { if (tampon) { tampon.olcek = esitle(tampon); (ornekler[ad] = ornekler[ad] || []).push(tampon); } }).catch(() => { /* dosya yok: sentez */ });
+  }
+  // Üretilen dosyaların yüksekliği farklı: sesli kısmın RMS'i ORNEK_RMS'ten yüksekse ona indirilir (yalnız kısar, 0,25..1 kat), sonra ORNEK kazancı.
+  const ORNEK_RMS = 0.12;
+  function esitle(tampon) {
+    let top = 0, n = 0;
+    for (let k = 0; k < tampon.numberOfChannels; k++) {
+      const d = tampon.getChannelData(k);
+      for (let i = 0; i < d.length; i++) if (Math.abs(d[i]) > 0.01) { top += d[i] * d[i]; n++; }   // sessiz baş/son ölçüyü düşürmesin
+    }
+    const rms = n ? Math.sqrt(top / n) : ORNEK_RMS;
+    return Math.max(0.25, Math.min(1, ORNEK_RMS / rms));
+  }
+  function ornekCal(ad, ...a) {
+    const liste = ornekler[ad]; if (!liste || !liste.length) return false;
+    const kazanc = ORNEK[ad][1], t = ctx.currentTime;
+    const bir = (t0, hiz, ses) => {   // aynı çeşit art arda gelmez; yükseklik ±%10 oynar (tekrar hissi azalır)
+      let i = Math.floor(Math.random() * liste.length);
+      if (liste.length > 1 && i === sonCesit[ad]) i = (i + 1) % liste.length;
+      sonCesit[ad] = i;
+      const s = ctx.createBufferSource(); s.buffer = liste[i]; s.playbackRate.value = hiz;
+      const g = ctx.createGain(); g.gain.value = ses * (s.buffer.olcek || 1) * (0.9 + Math.random() * 0.2); s.connect(g).connect(hedef); s.start(t0);
+    };
+    if (ad === "konus") {   // yazı akarken minik tıklar: sentezdeki gibi 5-9 tık, perdeye göre hız
+      const perde = a[0] || 1, n = 5 + Math.floor(Math.random() * 5);
+      for (let i = 0; i < n; i++) bir(t + i * 0.075, perde * (0.9 + Math.random() * 0.25), kazanc);
+    } else if (ad === "tus") {   // n tuş, aralarında 80-140 ms
+      for (let i = 0, tt = t; i < Math.min(a[0] || 1, 4); i++, tt += 0.08 + Math.random() * 0.06) bir(tt, 0.95 + Math.random() * 0.1, kazanc);
+    } else if (ad === "guguk") {   // saat kaçsa o kadar öter (en çok 12)
+      for (let i = 0; i < Math.min(a[0] || 3, 12); i++) bir(t + i * 0.9, 1, kazanc);
+    } else bir(t, 0.95 + Math.random() * 0.1, kazanc);
+    return true;
+  }
+  const sonCesit = {};
+  function oynat(ad, a) { if (ad === "konus") kis(); if (!ornekCal(ad, ...a)) calgilar[ad](...a); }
+  // Konuşma sırasında müzik %35 kısılır, konuşma bitince (sn) yavaşça geri gelir (dikkat konuşmaya kayar)
+  let kisZ = 0;
+  function kis(sn = 2) {
+    if (!muzikKis) return;
+    muzikKis.gain.setTargetAtTime(0.65, ctx.currentTime, 0.15);
+    clearTimeout(kisZ); kisZ = setTimeout(() => muzikKis.gain.setTargetAtTime(1, ctx.currentTime, 0.8), sn * 1000);
+  }
+  function akis(dosya, dongu, cikis) {   // <audio> öğesi -> kazanç -> cikis; dosya yoksa null döner (hata olayında)
+    const el = new Audio(); el.loop = dongu; el.preload = "auto"; el.src = SES_YOL + dosya;
+    const g = ctx.createGain(); g.gain.value = 0; ctx.createMediaElementSource(el).connect(g).connect(cikis);
+    return { el, g };
+  }
+  let ortamG = null, muzik = null, muzikDilim = "", muzikVar = true;
+  function ortamKur() {
+    const o = akis("ortam.mp3", true, ambBus);
+    o.el.addEventListener("canplay", () => { if (dosyaOrtam) return; dosyaOrtam = true; ortamG = o.g; o.el.play().catch(() => {}); odaUygula(); }, { once: true });
+  }
+  // Gün müziği: oyun saatine göre sabah (06-12) / öğle (12-17) / akşam (17-21) / gece; Atölye'de ve odak modunda Atölye müziği çalar.
+  const dilim = () => {   // oyun saati henüz yoksa null (yanlış parçayla başlayıp hemen değişmesin)
+    const ic = window.OFIS_IC; if (!ic || !ic.dakika) return null;
+    const s = Math.floor(ic.dakika() / 60) % 24;
+    return s >= 6 && s < 12 ? "sabah" : s >= 12 && s < 17 ? "ogle" : s >= 17 && s < 21 ? "aksam" : "gece";
+  };
+  function gunMuzigiAdim() {
+    const d = dilim();
+    if (!ctx || !d) return;
+    const duy = acik && muzikAcik && odaId !== "studyo" && !odakVar, t = ctx.currentTime;
+    disAdim(d);
+    if (!muzikVar) return;
+    if (!muzik) {
+      muzik = akis(d + ".mp3", true, muzikBus); muzikDilim = d;
+      muzik.el.addEventListener("error", () => { muzikVar = false; }, { once: true });
+    }
+    if (d !== muzikDilim) {   // dilim değişti: sön, yeni parçaya geç, gel
+      muzikDilim = d; muzik.g.gain.setTargetAtTime(0, t, 0.6);
+      const m = muzik; setTimeout(() => { if (m === muzik && muzikDilim === d) { m.el.src = SES_YOL + d + ".mp3"; gunMuzigiAdim(); } }, 2500);
+      return;
+    }
+    if (duy) { if (muzik.el.paused) muzik.el.play().catch(() => {}); muzik.g.gain.setTargetAtTime(0.55, t, 1.2); }
+    else muzik.g.gain.setTargetAtTime(0, t, 0.8);
+  }
+  const dis = {};   // ad -> {el, g, var}
+  let disDilim = "", yagmurVar = false;
+  function disAdim(d) {
+    if (!ctx) return;
+    if (!dis.kuslar) for (const ad of Object.keys(DIS)) {
+      const o = akis(ad + ".mp3", true, ambBus); o.var = true; o.el.addEventListener("error", () => { o.var = false; }, { once: true }); dis[ad] = o;
+    }
+    if (d !== disDilim) { disDilim = d; yagmurVar = Math.random() < 0.2; }
+    const t = ctx.currentTime, oda = odaId === "studyo" ? 0.3 : 1;
+    for (const [ad, dilimler] of Object.entries(DIS)) {
+      const o = dis[ad]; if (!o.var) continue;
+      const sev = acik && (ad === "yagmur" ? yagmurVar : dilimler.includes(d)) ? (ad === "yagmur" ? 0.35 : 0.25) * oda : 0;
+      if (sev > 0 && o.el.paused) o.el.play().catch(() => {});
+      o.g.gain.setTargetAtTime(sev, t, 1.5);
+      if (sev === 0 && !o.el.paused && o.g.gain.value < 0.005) o.el.pause();
     }
   }
   // Sürekli çalan ambiyans katmanı: kaynaklar -> kendi kazancı (0'dan başlar) -> ambBus
@@ -49,7 +168,17 @@ window.SES = (() => {
     ana = ctx.createGain(); ana.gain.value = 0.9 * seviye.genel; ana.connect(komp);
     efektBus = ctx.createGain(); efektBus.gain.value = seviye.efekt; efektBus.connect(ana);
     ambBus = ctx.createGain(); ambBus.gain.value = seviye.ambiyans; ambBus.connect(ana);
+    muzikBus = ctx.createGain(); muzikBus.gain.value = seviye.muzik;
+    muzikKis = ctx.createGain(); muzikBus.connect(muzikKis).connect(ana);   // konuşurken müziği hafifçe kısar (kis)
     hedef = efektBus;
+    // Oda yankısı: ~0,7 sn sönen sentez darbe yanıtı (küçük ofis); konumlu sesler uzaklığa göre buraya gönderilir, efekt seviyesine bağlı
+    yanki = ctx.createConvolver();
+    { const n = Math.floor(ctx.sampleRate * 0.7), ir = ctx.createBuffer(2, n, ctx.sampleRate);
+      for (let k = 0; k < 2; k++) { const d = ir.getChannelData(k); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3.2); }
+      yanki.buffer = ir; }
+    const yf = ctx.createBiquadFilter(); yf.type = "lowpass"; yf.frequency.value = 3200;
+    const yg = ctx.createGain(); yg.gain.value = 0.35; yanki.connect(yf).connect(yg).connect(efektBus);
+    orneklerYukle(); ortamKur(); setInterval(gunMuzigiAdim, 5000);
     beyazTampon = beyaz(1);
     // Oda tonu: alçak geçirgen kahverengi gürültü + çok hafif klima uğultusu (taban kazancıyla odaya göre kısılır)
     taban = ctx.createGain(); taban.gain.value = 1; taban.connect(ambBus);
@@ -186,6 +315,7 @@ window.SES = (() => {
       for (let i = 0; i < n; i++) tikirti(t + i * (0.06 + Math.random() * 0.09), 2400 + Math.random() * 1800, 0.05 + Math.random() * 0.03);
     },
     adim() { tikirti(ctx.currentTime, 380 + Math.random() * 120, 0.07, 0.04); },
+    tus(n = 1) { const t = ctx.currentTime; for (let i = 0; i < Math.min(n, 4); i++) tikirti(t + i * 0.1, 2600 + Math.random() * 900, 0.07, 0.02); },
     konus(perde = 1) {
       const t = ctx.currentTime, n = 5 + Math.floor(Math.random() * 5);
       for (let i = 0; i < n; i++) ton(t + i * 0.075, (330 + Math.random() * 160) * perde, "square", 0.05, 0.022);
@@ -241,38 +371,46 @@ window.SES = (() => {
     // Sürgülü cam kapı: filtreli gürültü süpürmesi + raylarda tık
     kapiAc() { kayma(600, 1700, 0.42, 0.07); tikirti(ctx.currentTime + 0.4, 260, 0.06, 0.05); },
     kapiKapa() { kayma(1500, 550, 0.38, 0.06); tikirti(ctx.currentTime + 0.36, 200, 0.08, 0.06); },
+    // Asansör geldi: yumuşak iki notalı çan
+    asansor() { const t = ctx.currentTime; ton(t, 988, "sine", 0.5, 0.06); ton(t + 0.22, 784, "sine", 0.7, 0.05); },
     // Ofis açıldı/kapandı ve boş odanın ışığı: kısa "tık" (şalter)
     ofisTik() { const t = ctx.currentTime; tikirti(t, 1100, 0.05, 0.07); tikirti(t + 0.07, 700, 0.07, 0.06); },
   };
 
-  // Konumlu çalma: panX -1 (sol) .. 1 (sağ), uzaklik karo cinsinden (uzaklaştıkça kısılır, uzakta tizler yumuşar).
+  // Konumlu çalma: panX -1 (sol) .. 1 (sağ), uzaklik karo cinsinden (başka oda +6). Kazanç 1 / (1 + (uzaklik/menzil)²) (MENZIL; varsayılan 4:
+  // 4 karoda yarı, 12'de ~%10); %3'ün altı hiç çalmaz. Uzaklaştıkça tizler yumuşar ve oda yankısının payı artar (yakın ses kuru, uzak ses yankılı).
   // Kaynak sesi `hedef` üzerinden bu zincire bağlanır; çağrı bitince hedef eski haline döner (calgilar eşzamanlı kurulur).
   function calKonum(ad, panX, uzaklik, ...a) {
     if (!acik || !ctx || !calgilar[ad]) return;
-    const g = ctx.createGain(); g.gain.value = Math.max(0.12, 1 / (1 + Math.max(0, uzaklik) * 0.1));
+    const u = Math.max(0, uzaklik), m = MENZIL[ad] || 4, kat = 1 / (1 + (u / m) ** 2);
+    if (kat < 0.03) return;
+    const g = ctx.createGain(); g.gain.value = kat;
     let son = g;
-    if (uzaklik > 8) { const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = Math.max(900, 7000 - uzaklik * 140); son.connect(lp); son = lp; }
+    if (u > m * 1.5) { const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = Math.max(700, 6000 - (u / m) * 1100); son.connect(lp); son = lp; }
     if (ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.value = Math.max(-1, Math.min(1, panX || 0)) * 0.9; son.connect(p); son = p; }
     son.connect(efektBus);
+    if (yanki) { const y = ctx.createGain(); y.gain.value = 0.12 + 0.35 * Math.min(1, u / (m * 3)); son.connect(y).connect(yanki); }
     const eski = hedef; hedef = g;
-    try { calgilar[ad](...a); } finally { hedef = eski; }
+    try { oynat(ad, a); } finally { hedef = eski; }
   }
 
   return {
     get acik() { return acik; },
-    ac() { baslat(); ctx.resume(); acik = true; ana.gain.setTargetAtTime(0.9 * seviye.genel, ctx.currentTime, 0.05); },
+    ac() { baslat(); ctx.resume(); acik = true; ana.gain.setTargetAtTime(0.9 * seviye.genel, ctx.currentTime, 0.05); gunMuzigiAdim(); },
     kapat() { if (!ctx) return; acik = false; ana.gain.setTargetAtTime(0, ctx.currentTime, 0.05); },
-    cal(ad, ...a) { if (acik && ctx && calgilar[ad]) calgilar[ad](...a); },
+    cal(ad, ...a) { if (acik && ctx && calgilar[ad]) oynat(ad, a); },
     calKonum,
     // Dış modüller (ajan sesleri) aynı ana bus'a bağlansın: açıksa { ctx, cikis: ana }, değilse null
     baglanti() { return acik && ctx ? { ctx, cikis: ana } : null; },
-    // Ayarlar paneli: tur genel | ambiyans | efekt, deger 0..1.5 (1 = varsayılan)
+    kis(sn) { if (ctx) kis(sn); },   // ajan sesi çalarken gün müziğini kısar
+    // Ayarlar paneli: tur genel | ambiyans | efekt | muzik, deger 0..1.5 (1 = varsayılan)
     seviye(tur, deger) {
       if (!(tur in seviye)) return; seviye[tur] = Math.max(0, Math.min(1.5, +deger || 0));
       if (!ctx) return; const t = ctx.currentTime;
       if (tur === "genel" && acik) ana.gain.setTargetAtTime(0.9 * seviye.genel, t, 0.05);
       else if (tur === "ambiyans") ambBus.gain.setTargetAtTime(seviye.ambiyans, t, 0.05);
       else if (tur === "efekt") efektBus.gain.setTargetAtTime(seviye.efekt, t, 0.05);
+      else if (tur === "muzik") muzikBus.gain.setTargetAtTime(seviye.muzik, t, 0.05);
     },
     // Şömine sesi: acik=true iken mesafe (karo) arttıkça kısılır. Ses henüz açılmamışsa seviye saklanır, açılınca uygulanır.
     somine(acik, mesafe = 0) { somineIstek = { acik, mesafe }; somineSeviye = acik && somineAcik ? Math.max(0.12, 1 / (1 + Math.max(0, mesafe) * 0.2)) * 1.5 : 0; if (ctx) somineUygula(); },
@@ -283,6 +421,11 @@ window.SES = (() => {
     // Oyuncunun bulunduğu oda (ODALAR kimliği): ambiyans katmanları yumuşakça değişir
     oda(id) { if (id === odaId) return; odaId = id; odaUygula(); },
     adlar() { return Object.keys(calgilar); },
-    durum() { return { durum: ctx && ctx.state, acik, oda: odaId, seviye: { ...seviye }, katman: ctx ? Object.keys(katmanlar) : [], panner: !!(ctx && ctx.createStereoPanner) }; },
+    durum() {
+      return { durum: ctx && ctx.state, acik, oda: odaId, seviye: { ...seviye }, katman: ctx ? Object.keys(katmanlar) : [], panner: !!(ctx && ctx.createStereoPanner),
+               dosya: { ortam: dosyaOrtam, muzik: muzikVar && muzik ? { dilim: muzikDilim, caliyor: !muzik.el.paused, kazanc: +muzik.g.gain.value.toFixed(2) } : null,
+                        dis: Object.fromEntries(Object.entries(dis).map(([k, o]) => [k, o.var ? +o.g.gain.value.toFixed(2) : null])), yagmur: yagmurVar,
+                        ornek: Object.fromEntries(Object.entries(ornekler).map(([k, v]) => [k, v.map((b) => +b.olcek.toFixed(2))])) } };
+    },
   };
 })();

@@ -869,7 +869,7 @@
   function kapatKayitSil() { kapatKayit = null; try { localStorage.removeItem(OFIS_ANAHTAR); } catch (e) { /* yok */ } }
   // Yedek otomatik kapanış zamanı (sn; Infinity = yok). Hızlı günde gün bitmeden çıkışlara yetecek kadar önce kapanır.
   const otoKapanisZamani = () => (otoErtele ? Infinity : GERCEK ? (OTO_KAPAT ? dkT((24 + OTO_KAPAT) * 60) : Infinity) : DONGU - Math.max(15, DONGU * 0.12));
-  const asansorAc = () => { asansor.son = zaman; sesKonum("kapiAc", GIRIS[0], GIRIS[1]); };
+  const asansorAc = () => { asansor.son = zaman; sesKonum("asansor", GIRIS[0], GIRIS[1]); sesKonum("kapiAc", GIRIS[0], GIRIS[1]); };
   // Rutine alınabilir mi? Senaryo olayı, görev ve dedikodu bitmeden ajan alınmaz
   const rutinMusait = (a) => !a.disarda && !a.rut && !a.konusuyor && !a.gecis && !["olay", "gorev", "dedikodu", "beyin"].includes(a.ozel);
   function rutinAl(a, durum, hizK, sure = 40) {

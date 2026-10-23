@@ -5,10 +5,10 @@
 (() => {
   const I = () => window.OFIS_IC;
   const AYAR_ANAHTAR = "ofis-demo-ayar-1";
-  const AYAR_VARSAYILAN = { genel: 100, ambiyans: 100, efekt: 100, yazi: "normal", font: "piksel", kalite: "yuksek", yurume: 100, kamera: 200, gun: "gercek", acilis: 8, kapanis: 4, mini: true, muzik: true, muzikTarz: "lofi", somine: true, telefon: "KeyP", surum: 2 };
+  const AYAR_VARSAYILAN = { genel: 100, ambiyans: 100, efekt: 100, muzikSes: 100, yazi: "normal", font: "piksel", kalite: "yuksek", yurume: 100, kamera: 200, gun: "gercek", acilis: 8, kapanis: 4, mini: true, muzik: true, muzikTarz: "lofi", somine: true, telefon: "KeyP", surum: 2 };
   const GUNLER = ["gercek", 2, 4, 6];   // gün süresi: gerçek saat ya da hızlı gün (dk)
   const ACILISLAR = [7, 8, 9, 10], KAPANISLAR = [0, 2, 3, 4, 5];   // ofis açılış saati; yedek otomatik kapanış (gece yarısından sonra saat, 0 = kapalı)
-  const AYAR_ARALIK = { genel: [0, 150], ambiyans: [0, 150], efekt: [0, 150], yurume: [50, 200], kamera: [120, 320] };
+  const AYAR_ARALIK = { genel: [0, 150], ambiyans: [0, 150], efekt: [0, 150], muzikSes: [0, 150], yurume: [50, 200], kamera: [120, 320] };
   const YAZI_K = { kucuk: 0.8, normal: 1, buyuk: 1.3 };
   const TELEFON_TUSLARI = ["KeyP", "KeyQ", "KeyF", "KeyG"];   // telefonu açan tuş (e.code); T ziyaret sohbetinde kullanıldığı için yok
   // Görüntü kalitesi: tuval çözünürlüğü üst sınırı. Otomatik: kare hızı uzun süre 45 fps altında kalırsa bir kademe düşürür (Yüksek 1.5 > Dengeli 1 > Hızlı 0.75)
@@ -50,14 +50,14 @@
     if (sonFont && sonFont !== ayar.font) ic.yerlesimYenile();   // oda tabelaları gibi önceden çizilmiş yazılar yeni yazı tipiyle yenilenir
     sonFont = ayar.font;
     ic.yaziK = YAZI_K[ayar.yazi]; ic.yurumeK = ayar.yurume / 100; ic.kameraK = ayar.kamera / 100; ic.MOD("ayarUygulandi", ayar);
-    SES.seviye("genel", ayar.genel / 100); SES.seviye("ambiyans", ayar.ambiyans / 100); SES.seviye("efekt", ayar.efekt / 100);
+    SES.seviye("genel", ayar.genel / 100); SES.seviye("ambiyans", ayar.ambiyans / 100); SES.seviye("efekt", ayar.efekt / 100); SES.seviye("muzik", ayar.muzikSes / 100);
     ic.ofisAyari(ayar.acilis, ayar.kapanis, ilk);   // açılış değişirse gün yeniden başlar; yalnız kapanış değişirse ofis durumu yeniden hesaplanır
-    SES.muzik(ayar.muzik, ayar.muzikTarz); SES.somineSes(ayar.somine);   // Atölye müziği ve şömine sesi: açık/kapalı, müzik tarzı
+    SES.muzik(ayar.muzik, ayar.muzikTarz); SES.somineSes(ayar.somine);   // müzik (gün müziği + Atölye) ve şömine sesi: açık/kapalı, Atölye tarzı
     ic.gunSuresi(ayar.gun === "gercek" ? 0 : ayar.gun * 60, ilk);   // değişirse olay saatleri, rutin ve görevler yeni güne göre ölçeklenir, oyun baştan başlar
     ayarPaneliniYaz();
   }
   function ayarPaneliniYaz() {
-    const bicim = { genel: (v) => v + "%", ambiyans: (v) => v + "%", efekt: (v) => v + "%", yurume: (v) => (v / 100).toFixed(1) + "×", kamera: (v) => (v / 100).toFixed(1) + "×" };
+    const bicim = { genel: (v) => v + "%", ambiyans: (v) => v + "%", efekt: (v) => v + "%", muzikSes: (v) => v + "%", yurume: (v) => (v / 100).toFixed(1) + "×", kamera: (v) => (v / 100).toFixed(1) + "×" };
     for (const k of Object.keys(bicim)) { const r = el("a_" + k); if (r) { r.value = ayar[k]; el("o_" + k).textContent = bicim[k](ayar[k]); } }
     document.querySelectorAll("#ayarPanel [data-ayar]").forEach((b) => b.classList.toggle("secili", String(ayar[b.dataset.ayar]) === b.dataset.v));
     if (el("a_mini")) el("a_mini").checked = ayar.mini;
