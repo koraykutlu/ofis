@@ -1,7 +1,7 @@
 """Dağıtım paketi: dist/Ofis-<sürüm>.zip (+ dist/SHA256SUMS). projeler/ofis-demo içinden ya da her yerden: `py -3 araclar/paketle.py [--tara] [--yasakli KELIME ...] [--vault KLASOR] [--veri KLASOR] [--cikti ZIP]`.
 Sürüm `surum.json > surum`dan gelir (zip adı ve içindeki surum.json). SHA256SUMS yayına (GitHub Release) zip ile birlikte yüklenir; güncelleyici onsuz kurmaz.
 
-Pakete giren: kod (.html .js .py .pyw .ps1 .bat .webmanifest), veri .js dosyaları (atlas, katalog, gardirop, harita), harita/ofis.tmj, yazi/ (Pixelify Sans .ttf + OFL.txt; dosyalar varsa), araclar/ (paketle.py hariç), moduller/,
+Pakete giren: kod (.html .js .py .pyw .ps1 .bat .webmanifest), veri .js dosyaları (atlas, katalog, gardirop, harita), harita/ofis.tmj, yazi/ (Pixelify Sans .ttf + OFL.txt; dosyalar varsa), sesler/ (müzik ve efekt .mp3; dosyalar varsa), araclar/ (paketle.py hariç), moduller/,
 README.md, MIMARI.md, SURPRIZLER.md, KURULUM.md, surum.json, LICENSE, Kur.bat ve varliklar/BURAYA.txt (varliklar/ başka hiçbir şey taşımaz).
 Girmeyen: varliklar/ içeriği (LimeZu zip'leri ve onlardan üretilen PNG/ICO: lisans gereği dağıtılamaz), __pycache__, .claude, *-yedek, dist/, yedek/, DEVAM.md,
 IYILESTIRME-RAPORU.md, TASARIM-*.md, secici2.html, araclar/katalog/, araclar/onizleme.png. Hangi yolun pakete girebileceğini araclar/guncelle.py > yol_incele belirler

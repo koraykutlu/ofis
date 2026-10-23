@@ -51,7 +51,7 @@
     const a = ic.rastgele(ic.ajanlar.filter((x) => !x.oyuncu && !ic.mesgul(x) && x.id !== "spiker") || []);
     if (!a) return;
     a.ozel = "gorev";
-    sonra(1.2, () => ic.gonder(a, ic.KAHVE, () => { ic.ses("kahve"); sonra(1.6, () => ic.gonder(a, ic.ziyaretNoktasi(oyuncu), () => {
+    sonra(1.2, () => ic.gonder(a, ic.KAHVE, () => { ic.sesKonum("kahve", a.x, a.y); sonra(1.6, () => ic.gonder(a, ic.ziyaretNoktasi(oyuncu), () => {
       ic.yonBak(a, oyuncu); ic.konus(a, `Buyrun ${OAD}, sade kahve. Sütlaç'tan saklayın.`); kahveSayisi++; ic.kalpler(oyuncu, 2);
       sonra(2.4, () => ic.eveDon(a, () => (a.ozel = null)));
     })); }));

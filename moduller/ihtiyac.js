@@ -60,7 +60,7 @@
     const yer = ic.enYakinYurur(2 + Math.floor(Math.random() * 4), 26);
     ic.gonder(a, yer, () => {
       if (a.ozel !== "atistirma") return;
-      a.yon = 1; ic.ses("tak"); doldur(a, { tokluk: 35 }); a.ih.enerji = sinirla(a.ih.enerji + 5);
+      a.yon = 1; ic.sesKonum("tak", a.x, a.y); doldur(a, { tokluk: 35 }); a.ih.enerji = sinirla(a.ih.enerji + 5);
       ic.konus(a, ic.rastgele(["Karnım zil çalıyor, bir şeyler atıştırayım 🍪", "Bir dilim bir şeyler iyi gider.", "Bisküvi molası!"]), true);
       ic.sonra(3.5, () => { if (a.ozel === "atistirma") ic.eveDon(a, () => { if (a.ozel === "atistirma") a.ozel = null; }); });
     });

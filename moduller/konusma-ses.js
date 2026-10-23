@@ -167,6 +167,7 @@
     const z = setInterval(() => guncelle(false), 90);
     sayac.calindi++; calanIt = it;
     it.dur = () => { try { gn.gain.setTargetAtTime(0, ctx.currentTime, 0.02); src.stop(ctx.currentTime + 0.08); } catch (e) { /* zaten durdu */ } };
+    if (SES.kis) SES.kis(sure + 0.5);   // konuşurken gün müziği kısılır
     await new Promise((ok) => { src.onended = ok; setTimeout(ok, sure * 1000 + 1500); src.start(); });
     clearInterval(z); calan = null; calanIt = null; it.dur = null;
     try { src.disconnect(); ls.disconnect(); hs.disconnect(); lp.disconnect(); gn.disconnect(); if (pn) pn.disconnect(); } catch (e) { /* zaten ayrık */ }
