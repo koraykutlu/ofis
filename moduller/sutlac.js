@@ -108,6 +108,10 @@
       else { kedi.x += (dx / m) * v; kedi.y += (dy / m) * v; }
       return;
     }
+    if (kedi.durum === "klavye" && kedi.ust && zaman - (kedi.tusZ || 0) > (kedi.tusAra || 0)) {   // pati tuşlara düzensiz basar: tek ya da çift tık
+      kedi.tusZ = zaman; kedi.tusAra = 0.25 + Math.random() * 0.9;
+      ic.sesKonum("tus", kedi.ust.px / T, kedi.ust.py / T, Math.random() < 0.3 ? 2 : 1);
+    }
     if (kedi.durum === "yat" && zaman - kedi.sonZ > 1.6) { kedi.sonZ = zaman; ic.parcacik({ x: kedi.x * T + 12, y: kedi.y * T, vx: 6, vy: -10, omur: 1.6, tip: "z" }); }
     if (oyuncu && kedi.durum !== "gez" && Math.hypot(kedi.x - oyuncu.x, kedi.y - oyuncu.y) < 1.4 && Math.random() < dt * 0.15) ic.sesKonum("mirr", kedi.x, kedi.y);
     kedi.sure -= dt;

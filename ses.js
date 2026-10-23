@@ -14,10 +14,11 @@ window.SES = (() => {
     miyav: [["miyav-1", "miyav-2"], 0.45], mirr: [["mirr"], 0.4], asansor: [["asansor"], 0.3], kahve: [["kahve"], 0.4], konus: [["konus"], 0.22],
     bildirim: [["bildirim"], 0.35], gorev: [["gorev"], 0.4], karne: [["karne"], 0.45], ret: [["ret"], 0.3], yazici: [["yazici"], 0.38],
     telefon: [["telefon"], 0.45], guguk: [["guguk"], 0.45], bloop: [["bloop"], 0.3], klavye: [["klavye-1", "klavye-2", "klavye-3"], 0.18],
+    tus: [["tus-1", "tus-2", "tus-3"], 0.3],   // tek tuş tıkı (Sütlaç klavyede)
   };
   // Konumlu seste duyulma menzili (karo): kazanç 1 / (1 + (uzaklık/menzil)²). Sessiz şeyler (mırlama, adım, klavye) yakında söner,
   // yüksek şeyler (telefon, guguk) uzaktan da duyulur. Listede olmayan: 4.
-  const MENZIL = { mirr: 2, adim: 3, klavye: 3, bloop: 3, tak: 3, konus: 4, kapiAc: 4, kapiKapa: 4, kahve: 5, yazici: 5, sikisti: 5,
+  const MENZIL = { mirr: 2, adim: 3, klavye: 3, tus: 3, bloop: 3, tak: 3, konus: 4, kapiAc: 4, kapiKapa: 4, kahve: 5, yazici: 5, sikisti: 5,
                    miyav: 6, asansor: 6, telefon: 8, guguk: 9 };
   // Pencereden dış sesler (döngü): kuşlar sabah ve öğlen; yağmur her dilim başında %20 olasılıkla o dilim boyunca.
   const DIS = { kuslar: ["sabah", "ogle"], yagmur: [] };
@@ -88,6 +89,8 @@ window.SES = (() => {
     if (ad === "konus") {   // yazı akarken minik tıklar: sentezdeki gibi 5-9 tık, perdeye göre hız
       const perde = a[0] || 1, n = 5 + Math.floor(Math.random() * 5);
       for (let i = 0; i < n; i++) bir(t + i * 0.075, perde * (0.9 + Math.random() * 0.25), kazanc);
+    } else if (ad === "tus") {   // n tuş, aralarında 80-140 ms
+      for (let i = 0, tt = t; i < Math.min(a[0] || 1, 4); i++, tt += 0.08 + Math.random() * 0.06) bir(tt, 0.95 + Math.random() * 0.1, kazanc);
     } else if (ad === "guguk") {   // saat kaçsa o kadar öter (en çok 12)
       for (let i = 0; i < Math.min(a[0] || 3, 12); i++) bir(t + i * 0.9, 1, kazanc);
     } else bir(t, 0.95 + Math.random() * 0.1, kazanc);
@@ -312,6 +315,7 @@ window.SES = (() => {
       for (let i = 0; i < n; i++) tikirti(t + i * (0.06 + Math.random() * 0.09), 2400 + Math.random() * 1800, 0.05 + Math.random() * 0.03);
     },
     adim() { tikirti(ctx.currentTime, 380 + Math.random() * 120, 0.07, 0.04); },
+    tus(n = 1) { const t = ctx.currentTime; for (let i = 0; i < Math.min(n, 4); i++) tikirti(t + i * 0.1, 2600 + Math.random() * 900, 0.07, 0.02); },
     konus(perde = 1) {
       const t = ctx.currentTime, n = 5 + Math.floor(Math.random() * 5);
       for (let i = 0; i < n; i++) ton(t + i * 0.075, (330 + Math.random() * 160) * perde, "square", 0.05, 0.022);

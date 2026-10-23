@@ -122,7 +122,7 @@ Tarayıcıda çalışan, derleme adımı olmayan tek sayfa. Sunucu: `py -3 -m ht
   oyun saatine (`OFIS_IC.dakika()`) göre 06/12/17/21 dilimleri, `<audio>` akışı → `muzikBus`, Atölye'de ve odak modunda susar (orada sentez Atölye müziği).
   `ortam.mp3` döngülü oda sesi → `ambBus`; yüklenince sentez uğultuları (oda tonu, fan, buzdolabı, haber uğultusu) susar. `ORNEK` tablosundaki efektler
   (`adim, kapiAc, kapiKapa, miyav, mirr, asansor, kahve, konus`) dosya yüklendiyse dosyadan, yoksa aynı adlı sentezle çalar; yüklenirken yüksek
-  dosyalar RMS'e göre kısılır (`esitle`, yalnız kısar). Ayrıca `bildirim, gorev, karne, ret, yazici, telefon, guguk` (saat kadar tekrar), `bloop`, `klavye`.
+  dosyalar RMS'e göre kısılır (`esitle`, yalnız kısar). Ayrıca `bildirim, gorev, karne, ret, yazici, telefon, guguk` (saat kadar tekrar), `bloop`, `klavye`, `tus` (tek tuş tıkı; Sütlaç klavyedeyken patisiyle düzensiz basar, sutlac.js).
   Dış sesler (`DIS`, döngü → `ambBus`): `kuslar` sabah/öğle, `yagmur` her dilim başında %20 olasılıkla; Atölye'de %30. Aynı çeşit art arda gelmez, yükseklik ±%10 oynar.
   Konumlu seste kazanç `1 / (1 + (uzaklık/menzil)²)`, menzil ses tipine göre (`MENZIL`: mırlama 2, adım/klavye 3, kapı 4, kahve/yazıcı 5, miyav 6,
   telefon 8, guguk 9; varsayılan 4); %3 altı çalmaz. Konumlu sesler uzaklığa göre oda yankısına (`yanki`, ~0,7 sn sentez darbe yanıtı → efektBus) gider:
